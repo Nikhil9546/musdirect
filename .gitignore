@@ -1,0 +1,35 @@
+# ── Markdown ─────────────────────────────────────────────────────────────────
+# Ignore all .md files except README.md (top-level and any per-package READMEs).
+# Drafts, notes, scratch PRDs, etc. stay local.
+*.md
+!README.md
+!**/README.md
+
+# ── Foundry ──────────────────────────────────────────────────────────────────
+contracts/cache/
+contracts/out/
+contracts/broadcast/
+contracts/.gas-snapshot
+# Vendored dependencies — contributors run `forge install` (see README).
+contracts/lib/
+
+# ── Node / TypeScript ────────────────────────────────────────────────────────
+**/node_modules/
+**/dist/
+**/.next/
+
+# ── Env files (never commit secrets) ─────────────────────────────────────────
+**/.env
+**/.env.*
+!**/.env.example
+
+# ── OS / editor ──────────────────────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+*.log
+coverage/
