@@ -1,0 +1,32 @@
+{
+  "name": "@musdirect/keeper",
+  "version": "0.0.1",
+  "description": "Cron service that executes due MUSDirect Debit schedules.",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node --env-file=.env dist/index.js",
+    "dev": "tsx --env-file=.env src/index.ts",
+    "tick": "tsx --env-file=.env src/cli/tick.ts",
+    "tick:env": "tsx src/cli/tick.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=20.6"
+  },
+  "dependencies": {
+    "node-cron": "^3.0.3",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
