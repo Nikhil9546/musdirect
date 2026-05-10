@@ -19,15 +19,38 @@ pnpm build
 pnpm start
 ```
 
-## End-to-end test (real EVM, no mocks for the contract path)
+## Live testnet verification (read-only, no funds needed)
 
 ```sh
-scripts/e2e.sh
+scripts/verify-testnet.sh
 ```
 
-Spins up anvil, deploys `MUSDirectDebit` + mock dependencies, funds an account,
-creates a schedule, runs one keeper tick, asserts that 99.75 MUSD landed at the
-payee and 0.25 MUSD at the fee recipient. **Run from any directory.**
+Probes the real Mezo testnet (chain id 31611), confirms bytecode at MUSD /
+TroveManager / PriceFeed, and exercises every read function MUSDirectDebit
+depends on. This is the live-chain twin of the Foundry fork test suite.
+
+## End-to-end against real testnet (write-path)
+
+```sh
+PAYER_PRIVATE_KEY=0x… \
+KEEPER_PRIVATE_KEY=0x… \
+FEE_RECIPIENT=0x… \
+PAYEE=0x… \
+scripts/deploy-and-tick.sh
+```
+
+Deploys `MUSDirectDebit` to Mezo testnet, has the payer approve + create a
+schedule, runs one keeper tick, and asserts the payee + fee recipient balances
+moved correctly. Two valid pass states:
+
+- **Payment executed** (payer has no Trove, or Trove CR ≥ 250%): payee gains
+  99.75 MUSD, fee recipient gains 0.25 MUSD.
+- **CR gate refused** (payer's Trove CR < 250%): no balance change. This is the
+  product working as designed; the script reports it as a pass with the
+  contextual reason.
+
+Preconditions: the script header documents what each env var must be. You'll
+need testBTC for both wallets (gas) and ≥ 100 MUSD for the payer.
 
 ## Unit tests
 

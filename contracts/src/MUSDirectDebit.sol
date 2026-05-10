@@ -6,7 +6,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import {ITroveManager} from "./interfaces/ITroveManager.sol";
-import {IBorrowerOperations} from "./interfaces/IBorrowerOperations.sol";
 import {IPriceFeed} from "./interfaces/IPriceFeed.sol";
 
 /// @title MUSDirectDebit — collateral-aware recurring MUSD payments on Mezo.
@@ -71,7 +70,6 @@ contract MUSDirectDebit is ReentrancyGuard {
 
     IERC20 public immutable musd;
     ITroveManager public immutable troveManager;
-    IBorrowerOperations public immutable borrowerOperations;
     IPriceFeed public immutable priceFeed;
     address public immutable feeRecipient;
 
@@ -138,18 +136,15 @@ contract MUSDirectDebit is ReentrancyGuard {
     constructor(
         IERC20 _musd,
         ITroveManager _troveManager,
-        IBorrowerOperations _borrowerOperations,
         IPriceFeed _priceFeed,
         address _feeRecipient
     ) {
         require(address(_musd) != address(0), "musd=0");
         require(address(_troveManager) != address(0), "trove=0");
-        require(address(_borrowerOperations) != address(0), "borrowerOps=0");
         require(address(_priceFeed) != address(0), "priceFeed=0");
         require(_feeRecipient != address(0), "feeRecipient=0");
         musd = _musd;
         troveManager = _troveManager;
-        borrowerOperations = _borrowerOperations;
         priceFeed = _priceFeed;
         feeRecipient = _feeRecipient;
     }
@@ -266,7 +261,7 @@ contract MUSDirectDebit is ReentrancyGuard {
         // CR gate. PriceFeed.fetchPrice() updates state, hence non-view.
         uint256 price = priceFeed.fetchPrice();
         uint256 currentICR = troveManager.getCurrentICR(s.payer, price);
-        bool recoveryMode = borrowerOperations.checkRecoveryMode(price);
+        bool recoveryMode = troveManager.checkRecoveryMode(price);
 
         uint256 effectiveMinCR = s.minSafeCR;
         if (recoveryMode && effectiveMinCR < RECOVERY_MODE_FLOOR) {

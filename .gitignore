@@ -17,6 +17,8 @@ contracts/lib/
 **/node_modules/
 **/dist/
 **/.next/
+**/tsconfig.tsbuildinfo
+frontend/next-env.d.ts
 
 # ── Env files (never commit secrets) ─────────────────────────────────────────
 **/.env

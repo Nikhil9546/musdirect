@@ -13,4 +13,7 @@ remappings = [
 ]
 
 [profile.fork]
-eth_rpc_url = "https://rpc.test.mezo.org"
+fuzz = { runs = 100 }
+
+[rpc_endpoints]
+mezo_testnet = "https://rpc.test.mezo.org"
