@@ -3,11 +3,87 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 html,
 body {
-  background-color: #0e0e0e;
-  color: #fafafa;
+  background: linear-gradient(
+    180deg,
+    #fff8f0 0%,
+    #ffe8d0 35%,
+    #ffd8b8 65%,
+    #ffe0c8 100%
+  );
+  color: #1a1a1a;
+  min-height: 100dvh;
+}
+
+/* Staggered fade-up for cards */
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 120ms; }
+.stagger > *:nth-child(3) { animation-delay: 240ms; }
+.stagger > *:nth-child(4) { animation-delay: 360ms; }
+
+/* MemWal-style thick-bordered card */
+.card {
+  @apply rounded-2xl border-2 border-[#1a1a1a] bg-white p-6;
+}
+
+.card-hover {
+  @apply transition-all duration-200;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0 #1a1a1a;
+}
+
+/* MemWal-style buttons */
+.btn-primary {
+  @apply inline-flex items-center gap-2 rounded-full border-2 border-[#1a1a1a] bg-mezo-orange px-6 py-2.5 text-sm font-bold text-white transition-all;
+}
+.btn-primary:hover {
+  box-shadow: 3px 3px 0 #1a1a1a;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  @apply inline-flex items-center gap-2 rounded-full border-2 border-[#1a1a1a] bg-white px-6 py-2.5 text-sm font-bold text-[#1a1a1a] transition-all;
+}
+.btn-secondary:hover {
+  box-shadow: 3px 3px 0 #1a1a1a;
+  transform: translateY(-1px);
+}
+
+.btn-accent {
+  @apply inline-flex items-center gap-2 rounded-full border-2 border-[#1a1a1a] bg-mezo-amber px-6 py-2.5 text-sm font-bold text-[#1a1a1a] transition-all;
+}
+.btn-accent:hover {
+  box-shadow: 3px 3px 0 #1a1a1a;
+  transform: translateY(-1px);
+}
+
+/* Decorative stripe pattern behind hero character */
+.hero-stripes {
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 18px,
+    rgba(255, 113, 0, 0.15) 18px,
+    rgba(255, 113, 0, 0.15) 22px
+  );
+}
+
+/* Dark code blocks */
+.code-block {
+  @apply rounded-xl border-2 border-[#1a1a1a] bg-[#1a1a1a] p-4 font-mono text-sm text-gray-300;
+}
+
+/* Inline code */
+.code-inline {
+  @apply rounded-md border border-[#1a1a1a]/20 bg-[#1a1a1a]/5 px-1.5 py-0.5 font-mono text-xs font-semibold;
 }

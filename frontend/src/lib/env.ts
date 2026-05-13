@@ -60,6 +60,11 @@ export const ENV = {
     "NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID",
     "PLACEHOLDER_WALLETCONNECT_PROJECT_ID"
   ),
+
+  explorerUrl: publicEnv(
+    "NEXT_PUBLIC_EXPLORER_URL",
+    "https://explorer.test.mezo.org"
+  ),
 } as const;
 
 export type Network = "mainnet" | "testnet";

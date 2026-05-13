@@ -11,18 +11,13 @@ interface Props {
   account: Address;
 }
 
-/// Reads BTC price + the connected user's ICR + their MUSD balance from the
-/// real Mezo testnet contracts. Static-only — doesn't write anything yet.
-/// Will become the "safe headroom" widget per PRD §6 P0-6.
 export function TroveHealthCard({ account }: Props) {
-  // Step 1: get the live BTC price (used to ask for ICR).
   const priceQuery = useReadContract({
     address: ENV.priceFeed,
     abi: PRICE_FEED_READ_ABI,
     functionName: "fetchPrice",
   });
 
-  // Step 2: ICR + Recovery Mode + MUSD balance, batched in a single multicall.
   const batched = useReadContracts({
     contracts: [
       {
@@ -55,42 +50,42 @@ export function TroveHealthCard({ account }: Props) {
   const noTrove = icr === BigInt(2) ** BigInt(256) - BigInt(1);
 
   return (
-    <div className="rounded-lg border border-mezo-edge bg-mezo-surface p-6">
+    <div className="card">
       <div className="mb-4 flex items-baseline justify-between">
-        <h2 className="text-lg font-semibold">Trove health</h2>
-        <span className="text-xs text-mezo-mute">
+        <h2 className="text-lg font-extrabold text-mezo-ink">Trove health</h2>
+        <span className="text-xs font-semibold text-mezo-mute">
           BTC {fmtUsdPrice(price)}
         </span>
       </div>
 
       <dl className="grid grid-cols-2 gap-y-3 text-sm">
-        <dt className="text-mezo-mute">Your CR</dt>
-        <dd className="text-right font-mono">{fmtCR(icr)}</dd>
+        <dt className="font-semibold text-mezo-mute">Your CR</dt>
+        <dd className="text-right font-mono font-bold">{fmtCR(icr)}</dd>
 
-        <dt className="text-mezo-mute">MUSD balance</dt>
-        <dd className="text-right font-mono">{fmtToken(musdBalance)}</dd>
+        <dt className="font-semibold text-mezo-mute">MUSD balance</dt>
+        <dd className="text-right font-mono font-bold">{fmtToken(musdBalance)}</dd>
 
-        <dt className="text-mezo-mute">System status</dt>
-        <dd className="text-right font-mono">
+        <dt className="font-semibold text-mezo-mute">System status</dt>
+        <dd className="text-right font-mono font-bold">
           {recoveryMode === undefined
-            ? "—"
+            ? "\u2014"
             : recoveryMode
-              ? <span className="text-red-400">Recovery Mode</span>
-              : <span className="text-emerald-400">Normal</span>}
+              ? <span className="text-red-600">Recovery Mode</span>
+              : <span className="text-emerald-600">Normal</span>}
         </dd>
       </dl>
 
       {noTrove && (
-        <p className="mt-4 rounded bg-mezo-edge/40 p-3 text-xs text-mezo-mute">
+        <p className="mt-4 rounded-xl border-2 border-mezo-orange/30 bg-orange-50 p-3 text-xs text-mezo-mute">
           You don&apos;t have a Trove on this network. Open one in Mezo Borrow to
           back MUSD payments with Bitcoin collateral. Without a Trove, the CR
-          gate is non-binding (ICR = ∞) and any schedule will execute as long as
+          gate is non-binding (ICR = &infin;) and any schedule will execute as long as
           you have an MUSD balance and approval.
         </p>
       )}
 
       {batched.isError && (
-        <p className="mt-4 text-xs text-red-400">
+        <p className="mt-4 text-xs font-semibold text-red-600">
           Read failed: {batched.error?.message ?? "unknown"}
         </p>
       )}
