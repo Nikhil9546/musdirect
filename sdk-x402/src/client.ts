@@ -6,8 +6,8 @@ import {
   type WalletClient,
 } from "viem";
 
-import { ERC20_APPROVE_ABI, MUSDIRECT_ONESHOT_ABI } from "./abi.js";
-import { PAYMENT_RECEIPT_HEADER, type PaymentRequired } from "./types.js";
+import { ERC20_APPROVE_ABI, MUSDIRECT_ONESHOT_ABI } from "./abi";
+import { PAYMENT_RECEIPT_HEADER, type PaymentRequired } from "./types";
 
 export interface PayOptions {
   walletClient: WalletClient;

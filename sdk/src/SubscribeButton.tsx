@@ -9,7 +9,7 @@ import {
 } from "wagmi";
 import type { Address } from "viem";
 
-import { ERC20_APPROVE_ABI, MUSDIRECT_CREATE_ABI } from "./abi.js";
+import { ERC20_APPROVE_ABI, MUSDIRECT_CREATE_ABI } from "./abi";
 
 export interface SubscribeButtonProps {
   /** Where the recurring payment lands. Typically the dApp's revenue address. */

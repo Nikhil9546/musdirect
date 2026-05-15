@@ -5,8 +5,8 @@ import {
   type PaymentRequired,
   type RequirePaymentResult,
   type X402ServerConfig,
-} from "./types.js";
-import { createVerifyClient, verifyOneShotReceipt } from "./verify.js";
+} from "./types";
+import { createVerifyClient, verifyOneShotReceipt } from "./verify";
 
 const DEFAULT_TROVE_OWNER_HEADER = "x-musdirect-trove-owner";
 

@@ -6,20 +6,20 @@
 // + executePayment; APIs use executeOneShot. Same CR gate; same Recovery Mode
 // floor; same MEZO drip to keepers/middleware operators.
 
-export { createX402Middleware } from "./server.js";
-export { x402Pay, fetchWith402, type PayResult, type PayOptions } from "./client.js";
+export { createX402Middleware } from "./server";
+export { x402Pay, fetchWith402, type PayResult, type PayOptions } from "./client";
 export {
   verifyOneShotReceipt,
   createVerifyClient,
   type DecodedOneShot,
   type VerifyExpectation,
   type VerifyResult,
-} from "./verify.js";
+} from "./verify";
 export {
   PAYMENT_RECEIPT_HEADER,
   type PaymentRequired,
   type RequirePaymentResult,
   type PaymentReceipt,
   type X402ServerConfig,
-} from "./types.js";
-export { MUSDIRECT_ONESHOT_ABI, ERC20_APPROVE_ABI } from "./abi.js";
+} from "./types";
+export { MUSDIRECT_ONESHOT_ABI, ERC20_APPROVE_ABI } from "./abi";

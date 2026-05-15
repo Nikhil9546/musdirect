@@ -7,7 +7,7 @@ import {
   type PublicClient,
 } from "viem";
 
-import { MUSDIRECT_ONESHOT_ABI } from "./abi.js";
+import { MUSDIRECT_ONESHOT_ABI } from "./abi";
 
 export interface DecodedOneShot {
   requestId: Hex;
