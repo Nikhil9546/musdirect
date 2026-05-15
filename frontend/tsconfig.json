@@ -16,8 +16,8 @@
     "plugins": [{ "name": "next" }],
     "paths": {
       "@/*": ["./src/*"],
-      "@musdirect/sdk": ["../sdk/src"],
-      "@musdirect/x402": ["../sdk-x402/src"]
+      "@musdirect/sdk": ["./node_modules/@musdirect/sdk/src"],
+      "@musdirect/x402": ["./node_modules/@musdirect/x402/src"]
     }
   },
   "include": [
@@ -25,9 +25,9 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     ".next/types/**/*.ts",
-    "../sdk/src/**/*.ts",
-    "../sdk/src/**/*.tsx",
-    "../sdk-x402/src/**/*.ts"
+    "node_modules/@musdirect/sdk/src/**/*.ts",
+    "node_modules/@musdirect/sdk/src/**/*.tsx",
+    "node_modules/@musdirect/x402/src/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }
