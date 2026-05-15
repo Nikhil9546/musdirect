@@ -1,6 +1,6 @@
 "use client";
 
-import { SubscribeButton } from "../../../../sdk/src";
+import { SubscribeButton } from "@musdirect/sdk";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { ENV } from "@/lib/env";

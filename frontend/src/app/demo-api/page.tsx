@@ -6,7 +6,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { getPublicClient } from "wagmi/actions";
 import type { Hex } from "viem";
 
-import { fetchWith402, PAYMENT_RECEIPT_HEADER, type PaymentRequired } from "../../../../sdk-x402/src";
+import { fetchWith402, PAYMENT_RECEIPT_HEADER, type PaymentRequired } from "@musdirect/x402";
 
 import { Header } from "@/components/Header";
 import { ENV } from "@/lib/env";

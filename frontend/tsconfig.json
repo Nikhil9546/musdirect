@@ -15,9 +15,19 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@musdirect/sdk": ["../sdk/src"],
+      "@musdirect/x402": ["../sdk-x402/src"]
     }
   },
-  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts",
+    "../sdk/src/**/*.ts",
+    "../sdk/src/**/*.tsx",
+    "../sdk-x402/src/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }
