@@ -110,7 +110,7 @@ export default function MezoGymDemo() {
                     amount={BigInt(plan.price) * 10n ** 18n}
                     frequency={30n * 86_400n}
                     totalSpentCap={BigInt(plan.price) * 12n * 10n ** 18n}
-                    minSafeCR={2_500000000000000000n}
+                    minSafeCR={1_500000000000000000n}
                     label={`Subscribe to ${plan.name}`}
                     className="btn-primary w-full justify-center"
                   />

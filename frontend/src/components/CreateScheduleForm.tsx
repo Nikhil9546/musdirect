@@ -27,9 +27,9 @@ const EXPIRY_OPTIONS = [
   { label: "2 years", seconds: 2 * 365 * 86_400 },
 ] as const;
 
-/// Pct → 1e18-scaled CR. 250 → 2.5e18.
+/// Pct → 1e18-scaled CR. 150 → 1.5e18.
 function pctToCR(pct: number): bigint {
-  return (BigInt(Math.floor(pct * 100)) * 10n ** 16n);
+  return (BigInt(Math.floor(pct)) * 10n ** 16n);
 }
 
 interface Props {
@@ -127,6 +127,7 @@ export function CreateScheduleForm({ onCreated }: Props) {
       address: scheduler,
       abi: MUSDIRECT_DEBIT_ABI,
       functionName: "createSchedule",
+      gas: 300_000n,
       args: [
         payee as Address,
         amount,
