@@ -19,6 +19,8 @@ contracts/lib/
 **/.next/
 **/tsconfig.tsbuildinfo
 frontend/next-env.d.ts
+# We use pnpm exclusively — never commit npm's lockfile.
+**/package-lock.json
 
 # ── Env files (never commit secrets) ─────────────────────────────────────────
 **/.env

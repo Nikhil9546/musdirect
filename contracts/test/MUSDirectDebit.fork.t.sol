@@ -8,6 +8,14 @@ import {ITroveManager} from "../src/interfaces/ITroveManager.sol";
 import {IPriceFeed} from "../src/interfaces/IPriceFeed.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+/// Local minimal mintable ERC-20 used only as a stand-in MEZO token in the
+/// MEZO-drip tests. Not a deployed dependency; lives only in the test runner.
+contract LocalMezoToken is ERC20 {
+    constructor() ERC20("Local MEZO", "MEZO") {}
+    function mint(address to, uint256 amount) external { _mint(to, amount); }
+}
 
 /// @notice Fork tests against the real Mezo testnet (chain id 31611).
 ///
@@ -62,6 +70,15 @@ contract MUSDirectDebitForkTest is Test {
         uint8 failureCount
     );
     event ScheduleAutoCancelled(uint256 indexed scheduleId);
+    event OneShotPaid(
+        bytes32 indexed requestId,
+        address indexed payer,
+        address indexed payee,
+        address troveOwner,
+        uint128 amount,
+        uint128 fee,
+        uint256 currentICR
+    );
 
     /// Live BTC price observed via cast call at the pinned block.
     /// Used as the mocked return for PriceFeed.fetchPrice() in contract-logic
@@ -78,7 +95,16 @@ contract MUSDirectDebitForkTest is Test {
         trove = ITroveManager(TROVE_MANAGER);
         priceFeed = IPriceFeed(PRICE_FEED);
 
-        scheduler = new MUSDirectDebit(musd, trove, priceFeed, feeRecipient);
+        // Default deployment: MEZO disabled (address(0), zero reward).
+        // Specific MEZO tests redeploy with a local MEZO stand-in.
+        scheduler = new MUSDirectDebit(
+            musd,
+            trove,
+            priceFeed,
+            feeRecipient,
+            IERC20(address(0)),
+            0
+        );
 
         // Fund the payer with real MUSD via deal() — this mutates a balance slot
         // on the real MUSD contract; no mock contract is deployed.
@@ -370,6 +396,202 @@ contract MUSDirectDebitForkTest is Test {
     // ─────────────────────────────────────────────────────────────────────────
     // Validation
     // ─────────────────────────────────────────────────────────────────────────
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MEZO drip — per PRD §15 fallback. Anyone can fund the treasury; on each
+    // successful execute the contract pays the executor a fixed MEZO reward.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    function test_fork_mezo_dripPaidOnExecute() public {
+        LocalMezoToken mezo = new LocalMezoToken();
+        uint128 reward = 0.5e18;
+        MUSDirectDebit s = new MUSDirectDebit(
+            musd, trove, priceFeed, feeRecipient, IERC20(address(mezo)), reward
+        );
+
+        // Fund the treasury (anyone can do this).
+        address funder = makeAddr("funder");
+        mezo.mint(funder, 10e18);
+        vm.startPrank(funder);
+        mezo.approve(address(s), type(uint256).max);
+        s.fundMezoTreasury(10e18);
+        vm.stopPrank();
+
+        assertEq(s.mezoTreasuryBalance(), 10e18);
+
+        // Create a schedule on this fresh scheduler.
+        vm.startPrank(payer);
+        musd.approve(address(s), type(uint256).max);
+        uint256 id = s.createSchedule(
+            payee, AMOUNT, FREQUENCY,
+            uint64(block.timestamp), uint64(block.timestamp + 365 days),
+            CAP, MIN_CR
+        );
+        vm.stopPrank();
+
+        _mockICR(4e18);
+
+        uint256 keeperMezoBefore = mezo.balanceOf(keeper);
+        vm.prank(keeper);
+        s.executePayment(id);
+
+        assertEq(mezo.balanceOf(keeper) - keeperMezoBefore, reward, "keeper got MEZO drip");
+        assertEq(s.mezoTreasuryBalance(), 10e18 - reward, "treasury debited");
+    }
+
+    function test_fork_mezo_dripSkippedIfTreasuryEmpty() public {
+        LocalMezoToken mezo = new LocalMezoToken();
+        uint128 reward = 0.5e18;
+        MUSDirectDebit s = new MUSDirectDebit(
+            musd, trove, priceFeed, feeRecipient, IERC20(address(mezo)), reward
+        );
+
+        vm.startPrank(payer);
+        musd.approve(address(s), type(uint256).max);
+        uint256 id = s.createSchedule(
+            payee, AMOUNT, FREQUENCY,
+            uint64(block.timestamp), uint64(block.timestamp + 365 days),
+            CAP, MIN_CR
+        );
+        vm.stopPrank();
+
+        _mockICR(4e18);
+
+        uint256 payeeBefore = musd.balanceOf(payee);
+        vm.prank(keeper);
+        s.executePayment(id);
+
+        // Payment still goes through (drip is non-essential to the payment path).
+        assertGt(musd.balanceOf(payee) - payeeBefore, 0, "payment landed");
+        assertEq(mezo.balanceOf(keeper), 0, "no MEZO since treasury empty");
+    }
+
+    function test_fork_mezo_constructorRejectsRewardWithoutToken() public {
+        vm.expectRevert(bytes("mezo=0 but reward>0"));
+        new MUSDirectDebit(musd, trove, priceFeed, feeRecipient, IERC20(address(0)), 1);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // One-shot (x402) payments — reactive primitive with the same CR gate.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    function test_fork_oneShot_happyPath() public {
+        _mockICR(4e18);
+
+        bytes32 requestId = keccak256(abi.encode("test/premium", uint256(1)));
+        uint128 amount = 3e18; // 3 MUSD micropayment
+
+        uint256 payerBefore = musd.balanceOf(payer);
+        uint256 payeeBefore = musd.balanceOf(payee);
+        uint256 feeBefore = musd.balanceOf(feeRecipient);
+
+        uint128 expectedFee = uint128((uint256(amount) * 25) / 10_000); // 0.0075 MUSD, below cap
+
+        vm.expectEmit(true, true, true, true);
+        emit OneShotPaid(requestId, payer, payee, payer, amount, expectedFee, 4e18);
+
+        vm.prank(payer);
+        uint256 icr = scheduler.executeOneShot(payer, payee, amount, MIN_CR, requestId);
+        assertEq(icr, 4e18);
+
+        assertEq(musd.balanceOf(payer), payerBefore - amount, "payer debited");
+        assertEq(musd.balanceOf(payee), payeeBefore + (amount - expectedFee), "payee net");
+        assertEq(musd.balanceOf(feeRecipient), feeBefore + expectedFee, "fee paid");
+        assertTrue(scheduler.paidRequests(requestId), "requestId marked");
+    }
+
+    function test_fork_oneShot_pausesWhenBelowCR() public {
+        _mockICR(2.4e18);
+        bytes32 requestId = bytes32(uint256(0xCAFE));
+
+        vm.prank(payer);
+        vm.expectRevert(abi.encodeWithSelector(MUSDirectDebit.CrBelowThreshold.selector, uint256(2.4e18), uint256(MIN_CR)));
+        scheduler.executeOneShot(payer, payee, 3e18, MIN_CR, requestId);
+
+        // Critically: requestId is NOT marked paid, so the caller can retry
+        // once their Trove recovers.
+        assertFalse(scheduler.paidRequests(requestId), "requestId NOT marked on CR refusal");
+    }
+
+    function test_fork_oneShot_replayBlocked() public {
+        _mockICR(4e18);
+        bytes32 requestId = bytes32(uint256(0xBEEF));
+
+        vm.prank(payer);
+        scheduler.executeOneShot(payer, payee, 3e18, MIN_CR, requestId);
+
+        // Same requestId again → revert.
+        vm.prank(payer);
+        vm.expectRevert(abi.encodeWithSelector(MUSDirectDebit.RequestAlreadyPaid.selector, requestId));
+        scheduler.executeOneShot(payer, payee, 3e18, MIN_CR, requestId);
+    }
+
+    function test_fork_oneShot_separateTroveOwner() public {
+        // Agent has its own MUSD but no Trove; owner has the Trove.
+        // The agent specifies the owner as troveOwner; the gate reads owner's CR.
+        address owner = makeAddr("owner");
+        _mockICR(4e18); // mockICR overrides the payer; we need to override owner instead
+        // Re-override specifically for `owner`.
+        vm.mockCall(
+            TROVE_MANAGER,
+            abi.encodeWithSelector(ITroveManager.getCurrentICR.selector, owner),
+            abi.encode(uint256(4e18))
+        );
+
+        bytes32 requestId = bytes32(uint256(0x12345));
+        vm.prank(payer);
+        uint256 icr = scheduler.executeOneShot(owner, payee, 3e18, MIN_CR, requestId);
+        assertEq(icr, 4e18);
+        assertTrue(scheduler.paidRequests(requestId));
+    }
+
+    function test_fork_oneShot_validation() public {
+        bytes32 r = bytes32(uint256(1));
+        vm.startPrank(payer);
+
+        vm.expectRevert(MUSDirectDebit.InvalidPayee.selector);
+        scheduler.executeOneShot(payer, address(0), 3e18, MIN_CR, r);
+
+        // Payee == sender is disallowed.
+        vm.expectRevert(MUSDirectDebit.InvalidPayee.selector);
+        scheduler.executeOneShot(payer, payer, 3e18, MIN_CR, r);
+
+        vm.expectRevert(MUSDirectDebit.InvalidAmount.selector);
+        scheduler.executeOneShot(payer, payee, 0, MIN_CR, r);
+
+        vm.expectRevert(MUSDirectDebit.InvalidMinCR.selector);
+        scheduler.executeOneShot(payer, payee, 3e18, 1.0e18, r);
+
+        vm.expectRevert(MUSDirectDebit.InvalidTroveOwner.selector);
+        scheduler.executeOneShot(address(0), payee, 3e18, MIN_CR, r);
+
+        vm.stopPrank();
+    }
+
+    function test_fork_oneShot_feeCappedAt5MUSD() public {
+        _mockICR(4e18);
+        uint128 bigAmount = 100_000e18;
+        deal(address(musd), payer, bigAmount * 2);
+
+        uint256 feeBefore = musd.balanceOf(feeRecipient);
+        vm.prank(payer);
+        scheduler.executeOneShot(payer, payee, bigAmount, MIN_CR, bytes32(uint256(0xABCD)));
+        assertEq(musd.balanceOf(feeRecipient) - feeBefore, 5e18, "fee capped at 5 MUSD");
+    }
+
+    function test_fork_oneShot_recoveryModeFloor() public {
+        // User asks for 150% floor; ICR is 154%; RM on → blocked at 155% effective.
+        _mockICR(1.54e18);
+        _mockRecoveryMode(true);
+
+        vm.prank(payer);
+        vm.expectRevert(abi.encodeWithSelector(
+            MUSDirectDebit.CrBelowThreshold.selector,
+            uint256(1.54e18),
+            uint256(1.55e18)
+        ));
+        scheduler.executeOneShot(payer, payee, 3e18, 1.5e18, bytes32(uint256(0xF00D)));
+    }
 
     function test_fork_create_validation() public {
         vm.startPrank(payer);

@@ -3,11 +3,11 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const NAV_LINKS = [
-  { label: "Problem", href: "#problem" },
-  { label: "Solution", href: "#solution" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Contracts", href: "#contracts" },
-  { label: "Dashboard", href: "#dashboard" },
+  { label: "Problem", href: "/#problem" },
+  { label: "Solution", href: "/#solution" },
+  { label: "Dashboard", href: "/#dashboard" },
+  { label: "Gym demo", href: "/demo-gym" },
+  { label: "API demo", href: "/demo-api" },
 ] as const;
 
 export function Header() {

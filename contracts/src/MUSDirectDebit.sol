@@ -73,8 +73,24 @@ contract MUSDirectDebit is ReentrancyGuard {
     IPriceFeed public immutable priceFeed;
     address public immutable feeRecipient;
 
+    /// @notice Optional MEZO token. When non-zero, the contract pays a MEZO
+    /// "drip" to the executor on every successful execution out of its own
+    /// MEZO balance. Anyone can replenish via `fundMezoTreasury`.
+    /// This is the PRD §15 documented fallback for MEZO integration:
+    /// "keeper-rewards-in-MEZO from a pre-funded treasury." If gauge
+    /// registration becomes available later, the gauge can be funded into
+    /// this treasury without redeploying.
+    IERC20 public immutable mezo;
+    uint128 public immutable mezoRewardPerExec;
+
     uint256 public nextScheduleId = 1;
     mapping(uint256 => Schedule) public schedules;
+
+    /// One-shot (x402) replay protection. Each `requestId` issued by an API
+    /// server's middleware can settle exactly one payment on-chain. A failed
+    /// CR check does NOT mark the requestId paid, so the payer can retry
+    /// later once their Trove recovers.
+    mapping(bytes32 => bool) public paidRequests;
 
     // ─────────────────────────────────────────────────────────────────────────────
     // Events
@@ -110,6 +126,19 @@ contract MUSDirectDebit is ReentrancyGuard {
     event SchedulePaused(uint256 indexed scheduleId, address indexed by);
     event ScheduleResumed(uint256 indexed scheduleId, address indexed by, uint64 nextExec);
     event ScheduleAutoCancelled(uint256 indexed scheduleId);
+    event MezoTreasuryFunded(address indexed by, uint256 amount);
+    event MezoRewardPaid(uint256 indexed scheduleId, address indexed to, uint256 amount);
+    /// One-shot (x402) payment. scheduleId is set to 0 in MezoRewardPaid for
+    /// the corresponding MEZO drip so off-chain indexers can distinguish.
+    event OneShotPaid(
+        bytes32 indexed requestId,
+        address indexed payer,
+        address indexed payee,
+        address troveOwner,
+        uint128 amount,
+        uint128 fee,
+        uint256 currentICR
+    );
 
     // ─────────────────────────────────────────────────────────────────────────────
     // Errors
@@ -120,6 +149,7 @@ contract MUSDirectDebit is ReentrancyGuard {
     error InvalidExpiry();
     error InvalidPayee();
     error InvalidMinCR();
+    error InvalidTroveOwner();
     error CapBelowFirstPayment();
     error UnknownSchedule();
     error NotScheduleOwner();
@@ -128,6 +158,7 @@ contract MUSDirectDebit is ReentrancyGuard {
     error AlreadyExpired();
     error CapExceeded();
     error CrBelowThreshold(uint256 currentICR, uint256 effectiveMinCR);
+    error RequestAlreadyPaid(bytes32 requestId);
 
     // ─────────────────────────────────────────────────────────────────────────────
     // Constructor
@@ -137,16 +168,43 @@ contract MUSDirectDebit is ReentrancyGuard {
         IERC20 _musd,
         ITroveManager _troveManager,
         IPriceFeed _priceFeed,
-        address _feeRecipient
+        address _feeRecipient,
+        IERC20 _mezo,
+        uint128 _mezoRewardPerExec
     ) {
         require(address(_musd) != address(0), "musd=0");
         require(address(_troveManager) != address(0), "trove=0");
         require(address(_priceFeed) != address(0), "priceFeed=0");
         require(_feeRecipient != address(0), "feeRecipient=0");
+        // _mezo == address(0) is allowed and disables the MEZO drip entirely.
+        // _mezoRewardPerExec must be zero when _mezo is unset, for clarity.
+        require(address(_mezo) != address(0) || _mezoRewardPerExec == 0, "mezo=0 but reward>0");
         musd = _musd;
         troveManager = _troveManager;
         priceFeed = _priceFeed;
         feeRecipient = _feeRecipient;
+        mezo = _mezo;
+        mezoRewardPerExec = _mezoRewardPerExec;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // MEZO treasury — open-funded, drips to keepers on every successful execute.
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /// @notice Top up the MEZO reward treasury. Anyone may call. No-op if MEZO is unset.
+    /// @dev Pulls `amount` MEZO from the caller via transferFrom; caller must approve first.
+    function fundMezoTreasury(uint256 amount) external {
+        require(address(mezo) != address(0), "no mezo");
+        if (amount == 0) return;
+        mezo.safeTransferFrom(msg.sender, address(this), amount);
+        emit MezoTreasuryFunded(msg.sender, amount);
+    }
+
+    /// @notice Current MEZO balance held by the scheduler. Used by keepers to
+    /// decide whether to bother polling.
+    function mezoTreasuryBalance() external view returns (uint256) {
+        if (address(mezo) == address(0)) return 0;
+        return mezo.balanceOf(address(this));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -303,6 +361,87 @@ contract MUSDirectDebit is ReentrancyGuard {
         }
 
         emit PaymentExecuted(scheduleId, s.payer, s.payee, s.amount, fee, currentICR, s.nextExec);
+
+        // MEZO drip — only if configured AND treasury has at least one reward's worth.
+        // Uses balanceOf rather than reverting to keep the happy path resilient
+        // when the treasury empties out (keeper just stops earning until refunded).
+        if (address(mezo) != address(0) && mezoRewardPerExec > 0) {
+            uint256 reward = mezoRewardPerExec;
+            if (mezo.balanceOf(address(this)) >= reward) {
+                mezo.safeTransfer(msg.sender, reward);
+                emit MezoRewardPaid(scheduleId, msg.sender, reward);
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // One-shot (x402) — reactive payment with the same CR gate.
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /// @notice Pay `amount` MUSD to `payee` exactly once, gated on `troveOwner`'s
+    /// collateral ratio. Used by the x402 server middleware (the at-musdirect
+    /// slash x402 npm package) to settle pay-per-request micropayments.
+    ///
+    /// @dev `msg.sender` is the payer and must have approved this contract for
+    /// at least `amount` MUSD. `troveOwner` is the address whose Trove ICR
+    /// gates the payment — it can equal `msg.sender` (agent with its own
+    /// Trove) or differ (agent's human owner gates the agent's spending).
+    ///
+    /// Reverts with `CrBelowThreshold` if the gate fails. The replay-protection
+    /// mapping is NOT marked when reverting — the payer can retry once their
+    /// Trove recovers, with the same `requestId`.
+    function executeOneShot(
+        address troveOwner,
+        address payee,
+        uint128 amount,
+        uint128 minSafeCR,
+        bytes32 requestId
+    ) external nonReentrant returns (uint256 currentICR) {
+        if (paidRequests[requestId]) revert RequestAlreadyPaid(requestId);
+        if (payee == address(0) || payee == msg.sender) revert InvalidPayee();
+        if (amount == 0) revert InvalidAmount();
+        if (minSafeCR < 1.1e18) revert InvalidMinCR();
+        if (troveOwner == address(0)) revert InvalidTroveOwner();
+
+        // CR gate — identical semantics to executePayment.
+        uint256 price = priceFeed.fetchPrice();
+        currentICR = troveManager.getCurrentICR(troveOwner, price);
+        bool recoveryMode = troveManager.checkRecoveryMode(price);
+
+        uint256 effectiveMinCR = minSafeCR;
+        if (recoveryMode && effectiveMinCR < RECOVERY_MODE_FLOOR) {
+            effectiveMinCR = RECOVERY_MODE_FLOOR;
+        }
+        if (currentICR < effectiveMinCR) {
+            revert CrBelowThreshold(currentICR, effectiveMinCR);
+        }
+
+        // CEI: mark the requestId paid before pulling MUSD.
+        paidRequests[requestId] = true;
+
+        // Fee math — same shape as executePayment.
+        // forge-lint: disable-next-line(unsafe-typecast)
+        uint128 fee = uint128((uint256(amount) * FEE_BPS) / BPS_DENOMINATOR);
+        // forge-lint: disable-next-line(unsafe-typecast)
+        if (fee > FEE_CAP) fee = uint128(FEE_CAP);
+        uint128 netToPayee = amount - fee;
+
+        musd.safeTransferFrom(msg.sender, payee, netToPayee);
+        if (fee > 0) {
+            musd.safeTransferFrom(msg.sender, feeRecipient, fee);
+        }
+
+        emit OneShotPaid(requestId, msg.sender, payee, troveOwner, amount, fee, currentICR);
+
+        // MEZO drip — same as the scheduled path, but tagged with scheduleId=0
+        // so consumers can distinguish recurring from reactive.
+        if (address(mezo) != address(0) && mezoRewardPerExec > 0) {
+            uint256 reward = mezoRewardPerExec;
+            if (mezo.balanceOf(address(this)) >= reward) {
+                mezo.safeTransfer(msg.sender, reward);
+                emit MezoRewardPaid(0, msg.sender, reward);
+            }
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────────

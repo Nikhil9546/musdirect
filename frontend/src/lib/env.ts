@@ -52,7 +52,16 @@ export const ENV = {
   ),
 
   // Empty until MUSDirectDebit is deployed; UI gracefully shows "not deployed".
-  scheduler: publicEnvAddressOptional("NEXT_PUBLIC_SCHEDULER_ADDRESS"),
+  scheduler: publicEnvAddressOptional("NEXT_PUBLIC_SCHEDULER_ADDRESS") ?? "0x47e0e0ef8936175ee769e857740f463a9e6f6a9e",
+
+  // Empty until the user configures MEZO integration; UI shows the drip as
+  // "not configured" in that case.
+  mezo: publicEnvAddressOptional("NEXT_PUBLIC_MEZO_ADDRESS"),
+
+  // Recipient wallet for x402 premium-API revenue. Defaults to null when
+  // unset; the demo route picks a safe placeholder so /api/premium still
+  // serves a 402 instead of crashing.
+  recipient: publicEnvAddressOptional("NEXT_PUBLIC_X402_RECIPIENT"),
 
   // WalletConnect needs a real project id for non-injected wallets to work.
   // Defaults to a placeholder so the UI still renders without one.

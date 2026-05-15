@@ -1,0 +1,34 @@
+{
+  "name": "@musdirect/sdk",
+  "version": "0.0.1",
+  "description": "Drop-in <SubscribeButton/> for embedding MUSDirect Debit recurring payments into any Mezo dApp.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.3.0",
+    "viem": "^2.22.0",
+    "wagmi": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "react": "^18.3.0",
+    "typescript": "^5.6.0",
+    "viem": "^2.22.0",
+    "wagmi": "^2.5.0"
+  },
+  "keywords": ["mezo", "musd", "bitcoin", "subscriptions", "recurring-payments"]
+}

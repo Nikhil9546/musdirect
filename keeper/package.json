@@ -11,6 +11,7 @@
     "dev": "tsx --env-file=.env src/index.ts",
     "tick": "tsx --env-file=.env src/cli/tick.ts",
     "tick:env": "tsx src/cli/tick.ts",
+    "trove-distribution": "tsx src/cli/trove-distribution.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "tsc -p tsconfig.json --noEmit"

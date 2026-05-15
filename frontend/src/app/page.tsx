@@ -7,6 +7,8 @@ import { Header } from "@/components/Header";
 import { WalrusMascot } from "@/components/WalrusMascot";
 import { SchedulerStatusCard } from "@/components/SchedulerStatusCard";
 import { TroveHealthCard } from "@/components/TroveHealthCard";
+import { CreateScheduleForm } from "@/components/CreateScheduleForm";
+import { SchedulesList } from "@/components/SchedulesList";
 import { ENV } from "@/lib/env";
 import { fmtAddress, fmtToken } from "@/lib/format";
 
@@ -126,9 +128,45 @@ export default function HomePage() {
               accent
             />
             <FeatureCard
-              title="Fully On-Chain"
-              description="Trustless, transparent, permissionless"
+              title="Recurring + Reactive"
+              description="Same CR gate for subscriptions and x402 API payments"
             />
+          </div>
+
+          {/* ── Unification thesis ── */}
+          <div className="stagger mt-16 grid gap-6 md:grid-cols-2">
+            <a href="/demo-gym" className="card card-hover group block">
+              <span className="mb-3 inline-block rounded-full border-2 border-mezo-orange/40 bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-mezo-orange">
+                Recurring
+              </span>
+              <h3 className="text-2xl font-extrabold text-mezo-ink">
+                Subscriptions on Mezo
+              </h3>
+              <p className="mt-2 text-sm text-mezo-mute">
+                Rent, gym, SaaS — set the schedule once. The keeper fires every period;
+                the CR gate refuses execution if your Trove is unsafe. Try the demo gym
+                dApp built on <code className="code-inline">@musdirect/sdk</code>.
+              </p>
+              <span className="mt-4 inline-block text-sm font-bold text-mezo-orange">
+                See /demo-gym →
+              </span>
+            </a>
+            <a href="/demo-api" className="card card-hover group block">
+              <span className="mb-3 inline-block rounded-full border-2 border-mezo-orange/40 bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-mezo-orange">
+                Reactive
+              </span>
+              <h3 className="text-2xl font-extrabold text-mezo-ink">
+                x402 APIs on Mezo
+              </h3>
+              <p className="mt-2 text-sm text-mezo-mute">
+                HTTP <code className="code-inline">402 Payment Required</code> with
+                MUSD settlement, gated by the same Trove CR. AI agents never accidentally
+                drain their owner toward liquidation. Try the live demo.
+              </p>
+              <span className="mt-4 inline-block text-sm font-bold text-mezo-orange">
+                See /demo-api →
+              </span>
+            </a>
           </div>
         </div>
       </section>
@@ -255,6 +293,15 @@ export default function HomePage() {
               <div className="mt-6 grid gap-6 sm:grid-cols-2">
                 <TroveHealthCard account={address} />
                 <SchedulerStatusCard />
+              </div>
+
+              <div className="mt-6 grid gap-6 lg:grid-cols-5">
+                <div className="lg:col-span-2">
+                  <CreateScheduleForm />
+                </div>
+                <div className="lg:col-span-3">
+                  <SchedulesList />
+                </div>
               </div>
             </>
           )}

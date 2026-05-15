@@ -13,6 +13,8 @@ const nextConfig = {
     "@mezo-org/mezod-contracts",
     "@mezo-org/sign-in-with-wallet",
     "@mezo-org/mezo-clay",
+    "@musdirect/sdk",
+    "@musdirect/x402",
   ],
   webpack: (config) => {
     // Passport bundles RainbowKit which expects pino-pretty in some logger
