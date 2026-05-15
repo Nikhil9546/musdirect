@@ -9,7 +9,7 @@
 
 import type { NextRequest } from "next/server";
 
-import { createX402Middleware } from "@musdirect/x402";
+import { createX402Middleware } from "../../../../../sdk-x402/src";
 
 import { ENV } from "@/lib/env";
 

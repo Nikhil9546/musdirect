@@ -1,11 +1,11 @@
 "use client";
 
-import { SubscribeButton } from "@musdirect/sdk";
+import { SubscribeButton } from "../../../../sdk/src";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { ENV } from "@/lib/env";
 
-// Demo "Mezo Gym" dApp — shows how a third-party app embeds MUSDirect Debit's
+// Demo "Mezo Demo" dApp — shows how a third-party app embeds MUSDirect Debit's
 // SubscribeButton in six lines. Per PRD §5 differentiator #4: "Drop-in dApp
 // SDK. Third-party Mezo apps embed <MUSDirectDebit.SubscribeButton /> in 6
 // lines. Positions the scheduler as Mezo's recurring-payments primitive."
@@ -51,7 +51,7 @@ export default function MezoGymDemo() {
         <div className="flex items-center justify-between">
           <a href="/" className="flex items-baseline gap-2">
             <span className="text-xl font-extrabold tracking-tight text-mezo-ink">
-              <span className="text-mezo-orange">Mezo</span>Gym
+              <span className="text-mezo-orange">Mezo</span>Demo
             </span>
             <span className="rounded-full border-2 border-mezo-ink px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-mezo-ink">
               Demo
@@ -71,7 +71,7 @@ export default function MezoGymDemo() {
           </h1>
           <p className="mt-4 text-mezo-mute">
             Pay monthly in MUSD. If your collateral ratio gets dangerous, this
-            month&apos;s payment quietly skips itself — your gym waiver
+            month&apos;s payment quietly skips itself — your membership
             re-enables when your Trove is healthy again.
           </p>
         </section>
@@ -135,7 +135,7 @@ export default function MezoGymDemo() {
 
 <SubscribeButton
   schedulerAddress="0x…"
-  payee="0xYourGymRevenue"
+  payee="0xYourRevenue"
   amount={49n * 10n ** 18n}
   frequency={30n * 86400n}
   totalSpentCap={49n * 12n * 10n ** 18n}
@@ -144,7 +144,7 @@ export default function MezoGymDemo() {
         </section>
 
         <p className="mt-12 text-center text-xs text-mezo-mute">
-          MezoGym is a fictional demo. <a href="/" className="underline">Back to MUSDirect</a>.
+          MezoDemo is a fictional demo. <a href="/" className="underline">Back to MUSDirect</a>.
         </p>
       </main>
     </div>

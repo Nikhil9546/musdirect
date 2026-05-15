@@ -135,7 +135,7 @@ export default function HomePage() {
 
           {/* ── Unification thesis ── */}
           <div className="stagger mt-16 grid gap-6 md:grid-cols-2">
-            <a href="/demo-gym" className="card card-hover group block">
+            <a href="/demo" className="card card-hover group block">
               <span className="mb-3 inline-block rounded-full border-2 border-mezo-orange/40 bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-mezo-orange">
                 Recurring
               </span>
@@ -144,11 +144,11 @@ export default function HomePage() {
               </h3>
               <p className="mt-2 text-sm text-mezo-mute">
                 Rent, gym, SaaS — set the schedule once. The keeper fires every period;
-                the CR gate refuses execution if your Trove is unsafe. Try the demo gym
+                the CR gate refuses execution if your Trove is unsafe. Try the demo
                 dApp built on <code className="code-inline">@musdirect/sdk</code>.
               </p>
               <span className="mt-4 inline-block text-sm font-bold text-mezo-orange">
-                See /demo-gym →
+                See /demo →
               </span>
             </a>
             <a href="/demo-api" className="card card-hover group block">

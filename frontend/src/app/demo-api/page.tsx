@@ -6,12 +6,12 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { getPublicClient } from "wagmi/actions";
 import type { Hex } from "viem";
 
-import { fetchWith402, PAYMENT_RECEIPT_HEADER, type PaymentRequired } from "@musdirect/x402";
+import { fetchWith402, PAYMENT_RECEIPT_HEADER, type PaymentRequired } from "../../../../sdk-x402/src";
 
 import { Header } from "@/components/Header";
 import { ENV } from "@/lib/env";
 
-// /demo-api — the API-side twin of /demo-gym.
+// /demo-api — the API-side twin of /demo.
 //
 // Shows the full x402 round-trip:
 //   1. GET /api/premium  → 402 with PaymentRequired body
