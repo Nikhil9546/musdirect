@@ -2,9 +2,11 @@
 
 import { ENV } from "@/lib/env";
 import { fmtAddress } from "@/lib/format";
+import { useUserSchedules } from "@/lib/schedules";
 
 export function SchedulerStatusCard() {
   const deployed = ENV.scheduler !== null;
+  const { schedules, loading } = useUserSchedules();
 
   return (
     <div className="card">
@@ -49,8 +51,8 @@ export function SchedulerStatusCard() {
             </a>
           </dd>
           <dt className="font-semibold text-mezo-mute">Your schedules</dt>
-          <dd className="text-right font-mono text-mezo-mute">
-            (fetch coming next session)
+          <dd className="text-right font-mono font-bold text-mezo-ink">
+            {loading ? "…" : schedules.length}
           </dd>
         </dl>
       )}

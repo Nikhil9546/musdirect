@@ -10,6 +10,7 @@ import { ENV } from "@/lib/env";
 import { MUSDIRECT_DEBIT_ABI, STATUS_ACTIVE, STATUS_PAUSED, statusLabel } from "@/lib/abis";
 import { useUserSchedules, type Schedule } from "@/lib/schedules";
 import { fmtAddress, fmtCR, fmtRelative, fmtToken } from "@/lib/format";
+import { WalrusMascot } from "./WalrusMascot";
 
 export function SchedulesList() {
   const { schedules, loading, error, refetch } = useUserSchedules();
@@ -34,15 +35,42 @@ export function SchedulesList() {
       </div>
 
       {error && (
-        <div className="rounded-xl border-2 border-red-200 bg-red-50 p-3 text-xs text-red-700">
-          {error}
+        <div className="mb-4 rounded-xl border-2 border-red-200 bg-red-50 p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-red-600">Sync Error</p>
+          <p className="mt-1 text-xs text-red-700">
+            {error.includes("maximum [from, to] blocks distance")
+              ? "The RPC node is limiting the block range. We're fetching in chunks, but some history might be missing."
+              : error.split(".")[0] + "."}
+          </p>
+          <button
+            onClick={refetch}
+            className="mt-2 text-[10px] font-bold uppercase tracking-widest text-red-600 underline underline-offset-2"
+          >
+            Try again
+          </button>
         </div>
       )}
 
       {!loading && schedules.length === 0 && !error && (
-        <p className="rounded-xl border-2 border-dashed border-[#1a1a1a]/20 p-4 text-center text-sm text-mezo-mute">
-          You haven&apos;t created any schedules yet. Use the form to set up your first recurring payment.
-        </p>
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#1a1a1a]/10 bg-gray-50/50 py-10 px-4 text-center">
+          <div className="mb-4 grayscale opacity-20">
+            <WalrusMascot className="w-16 h-16" />
+          </div>
+          <p className="max-w-[200px] text-sm font-medium text-mezo-mute">
+            No active schedules found for your wallet.
+          </p>
+          <p className="mt-1 text-xs text-mezo-mute/60">
+            Create one to see it live here.
+          </p>
+        </div>
+      )}
+
+      {loading && schedules.length === 0 && (
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-32 animate-pulse rounded-xl border-2 border-[#1a1a1a]/5 bg-gray-50" />
+          ))}
+        </div>
       )}
 
       <ul className="space-y-3">

@@ -251,12 +251,14 @@ export function CreateScheduleForm({ onCreated }: Props) {
       </div>
 
       {status && (
-        <p className="text-xs font-semibold text-mezo-orange">{status}</p>
+        <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50 p-3 text-xs font-bold text-emerald-700 animate-bounce">
+          ✓ {status}
+        </div>
       )}
       {(approve.error || create.error) && (
-        <p className="text-xs font-semibold text-red-600">
+        <div className="rounded-xl border-2 border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-600">
           {(approve.error?.message ?? create.error?.message ?? "").split("\n")[0]}
-        </p>
+        </div>
       )}
 
       <button
