@@ -61,16 +61,25 @@ export function useUserSchedules(): State {
         const client = getPublicClient(config, { chainId });
         if (!client) throw new Error("no public client");
 
-        const logs = await client.getLogs({
-          address: scheduler,
-          event: getAbiItem({ abi: MUSDIRECT_DEBIT_ABI, name: "ScheduleCreated" }) as
-            typeof SCHEDULE_CREATED_EVENT,
-          args: { payer: address },
-          fromBlock: 13036700n,
-          toBlock: "latest",
-        });
+        const currentBlock = await client.getBlockNumber();
+        const startBlock = 13036700n; // Deployment block
+        const CHUNK_SIZE = 9999n;
 
-        const ids = logs
+        let allLogs: any[] = [];
+        for (let from = startBlock; from <= currentBlock; from += CHUNK_SIZE + 1n) {
+          const to = from + CHUNK_SIZE > currentBlock ? currentBlock : from + CHUNK_SIZE;
+          const logs = await client.getLogs({
+            address: scheduler,
+            event: getAbiItem({ abi: MUSDIRECT_DEBIT_ABI, name: "ScheduleCreated" }) as
+              typeof SCHEDULE_CREATED_EVENT,
+            args: { payer: address },
+            fromBlock: from,
+            toBlock: to,
+          });
+          allLogs = [...allLogs, ...logs];
+        }
+
+        const ids = allLogs
           .map((l) => (l.args as { scheduleId?: bigint }).scheduleId)
           .filter((v): v is bigint => v !== undefined);
 
