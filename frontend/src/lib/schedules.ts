@@ -66,7 +66,7 @@ export function useUserSchedules(): State {
           event: getAbiItem({ abi: MUSDIRECT_DEBIT_ABI, name: "ScheduleCreated" }) as
             typeof SCHEDULE_CREATED_EVENT,
           args: { payer: address },
-          fromBlock: 13036700n,
+          fromBlock: 13058000n,
           toBlock: "latest",
         });
 

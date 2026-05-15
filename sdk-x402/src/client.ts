@@ -80,6 +80,7 @@ export async function x402Pay(opts: PayOptions): Promise<PayResult> {
     chain: walletClient.chain ?? null,
     to: pr.scheduler,
     data,
+    gas: 300_000n,
   });
   await publicClient.waitForTransactionReceipt({ hash: txHash });
 

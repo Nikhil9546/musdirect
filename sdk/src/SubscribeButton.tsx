@@ -114,6 +114,7 @@ export function SubscribeButton(props: SubscribeButtonProps) {
       address: schedulerAddress,
       abi: MUSDIRECT_CREATE_ABI,
       functionName: "createSchedule",
+      gas: 300_000n,
       args: [
         payee,
         amount,
