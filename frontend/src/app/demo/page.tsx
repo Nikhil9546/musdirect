@@ -1,8 +1,7 @@
 "use client";
 
 import { SubscribeButton } from "@musdirect/sdk";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-
+import { Header } from "@/components/Header";
 import { ENV } from "@/lib/env";
 
 // Demo "Mezo Demo" dApp — shows how a third-party app embeds MUSDirect Debit's
@@ -46,30 +45,18 @@ export default function MezoGymDemo() {
   const schedulerConfigured = ENV.scheduler !== null;
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-[#fff8f0] via-[#ffe8d0] to-[#ffd8b8] py-16">
-      <header className="mx-auto max-w-4xl px-6 pb-12">
-        <div className="flex items-center justify-between">
-          <a href="/" className="flex items-baseline gap-2">
-            <span className="text-xl font-extrabold tracking-tight text-mezo-ink">
-              <span className="text-mezo-orange">Mezo</span>Demo
-            </span>
-            <span className="rounded-full border-2 border-mezo-ink px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-mezo-ink">
-              Demo
-            </span>
-          </a>
-          <ConnectButton label="Connect" />
-        </div>
-      </header>
+    <div className="flex min-h-dvh flex-col">
+      <Header />
 
-      <main className="mx-auto max-w-4xl px-6">
+      <main className="mx-auto max-w-4xl flex-grow px-4 py-16 md:px-6">
         <section className="mb-12 text-center">
           <span className="btn-accent mb-6 inline-flex text-xs">
             Powered by @musdirect/sdk
           </span>
-          <h1 className="text-4xl font-extrabold tracking-tight text-mezo-ink md:text-5xl">
+          <h1 className="text-balance text-xl font-extrabold leading-tight tracking-tight text-mezo-ink sm:text-4xl md:text-5xl">
             Membership that pauses when your Trove is at risk.
           </h1>
-          <p className="mt-4 text-mezo-mute">
+          <p className="mx-auto mt-4 max-w-prose text-balance text-sm text-mezo-mute sm:text-base">
             Pay monthly in MUSD. If your collateral ratio gets dangerous, this
             month&apos;s payment quietly skips itself — your membership
             re-enables when your Trove is healthy again.
@@ -131,7 +118,7 @@ export default function MezoGymDemo() {
           <p className="mb-3 text-xs font-bold uppercase tracking-wide text-mezo-orange">
             Integration — 6 lines
           </p>
-          <pre className="overflow-x-auto text-xs leading-relaxed">{`import { SubscribeButton } from "@musdirect/sdk";
+          <pre className="max-w-full overflow-x-auto text-xs leading-relaxed">{`import { SubscribeButton } from "@musdirect/sdk";
 
 <SubscribeButton
   schedulerAddress="0x…"
@@ -142,11 +129,22 @@ export default function MezoGymDemo() {
   minSafeCR={2_500000000000000000n}
 />`}</pre>
         </section>
-
-        <p className="mt-12 text-center text-xs text-mezo-mute">
-          MezoDemo is a fictional demo. <a href="/" className="underline">Back to MUSDirect</a>.
-        </p>
       </main>
+
+      <footer className="border-t-2 border-[#1a1a1a] bg-white/60 py-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 text-sm text-mezo-mute md:px-6">
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-extrabold tracking-tight text-mezo-ink">
+              <span className="text-mezo-orange">MUS</span>Direct
+            </span>
+            <span className="text-xs font-bold">Debit</span>
+          </div>
+          <p>
+            Mezo testnet &middot; chain id {ENV.chainId} &middot; Collateral-aware
+            recurring payments
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

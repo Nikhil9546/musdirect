@@ -5,7 +5,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 const NAV_LINKS = [
   { label: "Problem", href: "/#problem" },
   { label: "Solution", href: "/#solution" },
-  { label: "Dashboard", href: "/#dashboard" },
+  { label: "Dashboard", href: "/dashboard" },
   { label: "Demo", href: "/demo" },
   { label: "API demo", href: "/demo-api" },
 ] as const;
@@ -13,36 +13,54 @@ const NAV_LINKS = [
 export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b-2 border-[#1a1a1a] bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3">
-        {/* Logo */}
-        <a href="#" className="flex items-baseline gap-2">
-          <span className="text-xl font-extrabold tracking-tight text-mezo-ink">
-            <span className="text-mezo-orange">MUS</span>Direct
-          </span>
-          <span className="rounded-full border-2 border-mezo-ink px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-mezo-ink">
-            Debit
-          </span>
-        </a>
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 md:px-6">
+        {/* Top Row: Logo + Wallet (always visible) */}
+        <div className="flex h-14 items-center justify-between gap-2 sm:gap-4">
+          {/* Logo */}
+          <a href="/" className="flex shrink-0 items-baseline gap-1 sm:gap-2">
+            <span className="text-sm font-extrabold tracking-tight text-mezo-ink sm:text-lg md:text-xl">
+              <span className="text-mezo-orange">MUS</span>Direct
+            </span>
+            <span className="rounded-full border border-mezo-ink px-1 py-0.5 text-[7px] font-bold uppercase tracking-widest text-mezo-ink sm:border-2 sm:px-2 sm:text-[10px]">
+              Debit
+            </span>
+          </a>
 
-        {/* Nav links */}
-        <nav className="hidden items-center gap-6 md:flex">
+          {/* Nav links (Desktop Only - Center) */}
+          <nav className="hidden items-center gap-6 md:flex">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="text-sm font-semibold text-mezo-mute transition-colors hover:text-mezo-ink"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Wallet */}
+          <div className="flex shrink-0 items-center">
+            <ConnectButton
+              label="Connect"
+              accountStatus={{ smallScreen: "avatar", largeScreen: "full" }}
+              chainStatus="icon"
+            />
+          </div>
+        </div>
+
+        {/* Bottom Row: Mobile Nav (Mobile Only) */}
+        <nav className="flex w-full items-center gap-4 overflow-x-auto border-t border-[#1a1a1a]/5 pb-2 pt-2 md:hidden">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="text-sm font-semibold text-mezo-mute transition-colors hover:text-mezo-ink"
+              className="whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-mezo-mute transition-colors hover:text-mezo-ink"
             >
               {link.label}
             </a>
           ))}
         </nav>
-
-        {/* Wallet */}
-        <ConnectButton
-          label="Connect"
-          accountStatus={{ smallScreen: "avatar", largeScreen: "full" }}
-          chainStatus="icon"
-        />
       </div>
     </header>
   );

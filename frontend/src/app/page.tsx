@@ -1,49 +1,47 @@
 "use client";
 
-import { useAccount, useBalance } from "wagmi";
+import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { Header } from "@/components/Header";
 import { WalrusMascot } from "@/components/WalrusMascot";
-import { SchedulerStatusCard } from "@/components/SchedulerStatusCard";
-import { TroveHealthCard } from "@/components/TroveHealthCard";
-import { CreateScheduleForm } from "@/components/CreateScheduleForm";
-import { SchedulesList } from "@/components/SchedulesList";
 import { ENV } from "@/lib/env";
-import { fmtAddress, fmtToken } from "@/lib/format";
 
 export default function HomePage() {
-  const { address, isConnected, chain } = useAccount();
-  const balance = useBalance({ address });
+  const { isConnected } = useAccount();
 
   return (
     <div className="flex min-h-dvh flex-col">
       <Header />
 
       {/* ─── HERO ─── */}
-      <section className="relative overflow-hidden px-6 py-24 md:py-32 lg:py-40">
+      <section className="relative overflow-hidden px-4 py-24 md:px-6 md:py-32 lg:py-40">
         <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-2">
           <div className="animate-fade-up">
             <span className="btn-accent mb-6 inline-flex text-xs">
               Built on Mezo
             </span>
 
-            <h1 className="text-5xl font-extrabold leading-[1.08] tracking-tight text-mezo-ink md:text-6xl lg:text-7xl">
-              Auto-pay your
-              <br />
-              rent in MUSD{" "}
+            <h1 className="text-balance text-2xl font-extrabold leading-[1.1] tracking-tight text-mezo-ink sm:text-4xl md:text-6xl lg:text-7xl">
+              Auto-pay your rent in MUSD{" "}
               <span className="text-mezo-orange">
-                without risking your&nbsp;Bitcoin.
+                without risking your Bitcoin.
               </span>
             </h1>
 
-            <p className="mt-6 max-w-lg text-lg leading-relaxed text-mezo-mute md:text-xl">
+            <p className="mt-6 max-w-lg text-base leading-relaxed text-mezo-mute sm:text-lg md:text-xl">
               Programmable recurring payments with collateral-aware safeguards.
-              Your Trove stays safe&nbsp;&mdash;&nbsp;automatically.
+              Your Trove stays safe &mdash; automatically.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center gap-4">
-              <ConnectButton label="Launch App" />
+              {isConnected ? (
+                <a href="/dashboard" className="btn-primary">
+                  Go to Dashboard
+                </a>
+              ) : (
+                <ConnectButton label="Launch App" />
+              )}
               <a href="#how-it-works" className="btn-secondary group">
                 How It Works{" "}
                 <span className="inline-block transition-transform group-hover:translate-x-1">
@@ -62,12 +60,12 @@ export default function HomePage() {
       </section>
 
       {/* ─── PROBLEM ─── */}
-      <section id="problem" className="px-6 py-20 md:py-28">
+      <section id="problem" className="px-4 py-20 md:px-6 md:py-28">
         <div className="mx-auto max-w-7xl">
           <span className="btn-primary mb-6 inline-flex text-xs">
             The Problem
           </span>
-          <h2 className="max-w-3xl text-4xl font-extrabold tracking-tight text-mezo-ink md:text-5xl">
+          <h2 className="text-balance max-w-3xl text-3xl font-extrabold tracking-tight text-mezo-ink sm:text-4xl md:text-5xl">
             MUSD borrowers have no safe way to automate payments.
           </h2>
           <p className="mt-4 max-w-2xl text-lg text-mezo-mute">
@@ -96,12 +94,12 @@ export default function HomePage() {
       </section>
 
       {/* ─── SOLUTION ─── */}
-      <section id="solution" className="px-6 py-20 md:py-28">
+      <section id="solution" className="px-4 py-20 md:px-6 md:py-28">
         <div className="mx-auto max-w-7xl">
           <span className="btn-accent mb-6 inline-flex text-xs">
             The Solution
           </span>
-          <h2 className="max-w-3xl text-4xl font-extrabold tracking-tight text-mezo-ink md:text-5xl">
+          <h2 className="text-balance max-w-3xl text-3xl font-extrabold tracking-tight text-mezo-ink sm:text-4xl md:text-5xl">
             Set it and forget it.{" "}
             <span className="text-mezo-mute">
               MUSDirect checks your Trove before every payment.
@@ -172,12 +170,12 @@ export default function HomePage() {
       </section>
 
       {/* ─── HOW IT WORKS ─── */}
-      <section id="how-it-works" className="px-6 py-20 md:py-28">
+      <section id="how-it-works" className="px-4 py-20 md:px-6 md:py-28">
         <div className="mx-auto max-w-7xl">
           <span className="btn-primary mb-6 inline-flex text-xs">
             How It Works
           </span>
-          <h2 className="text-4xl font-extrabold tracking-tight text-mezo-ink md:text-5xl">
+          <h2 className="text-balance text-3xl font-extrabold tracking-tight text-mezo-ink sm:text-4xl md:text-5xl">
             Three steps to safe, automated payments.
           </h2>
 
@@ -202,12 +200,12 @@ export default function HomePage() {
       </section>
 
       {/* ─── CONTRACTS ─── */}
-      <section id="contracts" className="px-6 py-20 md:py-28">
+      <section id="contracts" className="px-4 py-20 md:px-6 md:py-28">
         <div className="mx-auto max-w-7xl">
           <span className="btn-secondary mb-6 inline-flex text-xs">
             Contracts
           </span>
-          <h2 className="text-4xl font-extrabold tracking-tight text-mezo-ink md:text-5xl">
+          <h2 className="text-balance text-3xl font-extrabold tracking-tight text-mezo-ink sm:text-4xl md:text-5xl">
             Deployed on Mezo Testnet.
           </h2>
           <p className="mt-4 max-w-2xl text-lg text-mezo-mute">
@@ -241,76 +239,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── DASHBOARD ─── */}
-      <section id="dashboard" className="px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-7xl">
-          <span className="btn-accent mb-6 inline-flex text-xs">
-            Dashboard
-          </span>
-          <h2 className="text-4xl font-extrabold tracking-tight text-mezo-ink md:text-5xl">
-            Your Trove at a glance.
-          </h2>
-
-          {!isConnected && (
-            <div className="card card-hover mt-12 border-dashed text-center">
-              <p className="mb-2 text-2xl font-extrabold text-mezo-ink">
-                Connect your wallet to get started
-              </p>
-              <p className="mx-auto mb-8 max-w-md text-mezo-mute">
-                Mezo Passport supports Bitcoin wallets (Unisat, OKX, Xverse)
-                and EVM wallets (MetaMask, WalletConnect).
-              </p>
-              <div className="inline-block">
-                <ConnectButton label="Connect Wallet" />
-              </div>
-            </div>
-          )}
-
-          {isConnected && address && (
-            <>
-              <div className="card mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-                <span>
-                  <span className="font-semibold text-mezo-mute">Wallet </span>
-                  <span className="font-mono font-bold">
-                    {fmtAddress(address)}
-                  </span>
-                </span>
-                <span>
-                  <span className="font-semibold text-mezo-mute">Chain </span>
-                  <span className="font-mono">
-                    {chain?.name ?? "\u2014"} ({chain?.id ?? ENV.chainId})
-                  </span>
-                </span>
-                <span>
-                  <span className="font-semibold text-mezo-mute">Native </span>
-                  <span className="font-mono">
-                    {fmtToken(balance.data?.value)}{" "}
-                    {balance.data?.symbol ?? "BTC"}
-                  </span>
-                </span>
-              </div>
-
-              <div className="mt-6 grid gap-6 sm:grid-cols-2">
-                <TroveHealthCard account={address} />
-                <SchedulerStatusCard />
-              </div>
-
-              <div className="mt-6 grid gap-6 lg:grid-cols-5">
-                <div className="lg:col-span-2">
-                  <CreateScheduleForm />
-                </div>
-                <div className="lg:col-span-3">
-                  <SchedulesList />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </section>
-
       {/* ─── FOOTER ─── */}
       <footer className="border-t-2 border-[#1a1a1a] bg-white/60 py-10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-6 text-sm text-mezo-mute">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 text-sm text-mezo-mute md:px-6">
           <div className="flex items-baseline gap-2">
             <span className="text-lg font-extrabold tracking-tight text-mezo-ink">
               <span className="text-mezo-orange">MUS</span>Direct

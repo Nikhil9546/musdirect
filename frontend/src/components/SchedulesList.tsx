@@ -19,7 +19,7 @@ export function SchedulesList() {
 
   return (
     <div className="card">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-extrabold text-mezo-ink">Your schedules</h3>
           <p className="text-xs text-mezo-mute">
@@ -136,7 +136,7 @@ function ScheduleRow({ schedule, onChanged }: { schedule: Schedule; onChanged: (
   return (
     <li className="rounded-xl border-2 border-[#1a1a1a]/15 bg-white p-4 text-sm">
       <div className="flex items-baseline justify-between gap-2">
-        <div className="flex items-baseline gap-2">
+        <div className="flex flex-wrap items-baseline gap-2">
           <span className="font-mono text-xs text-mezo-mute">#{String(schedule.id)}</span>
           <span className="font-bold text-mezo-ink">
             {fmtToken(schedule.amount, 18, 2)} MUSD

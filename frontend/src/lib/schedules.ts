@@ -6,11 +6,10 @@ import { type Address, getAbiItem, parseAbiItem } from "viem";
 import { getPublicClient } from "wagmi/actions";
 
 import { ENV } from "./env";
-import { MUSDIRECT_DEBIT_ABI, SCHEDULE_CREATED_EVENT_ABI } from "./abis";
+import { MUSDIRECT_DEBIT_ABI } from "./abis";
 
 // `viem` types this neatly when we pull the item from the ABI rather than
 // hand-defining the event string.
-const SCHEDULE_CREATED_EVENT = SCHEDULE_CREATED_EVENT_ABI;
 
 export interface Schedule {
   id: bigint;
@@ -65,15 +64,19 @@ export function useUserSchedules(): State {
         const startBlock = 13058000n; // Use the pulled start block
         const CHUNK_SIZE = 9999n;
 
+        const event = getAbiItem({ abi: MUSDIRECT_DEBIT_ABI, name: "ScheduleCreated" });
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let allLogs: any[] = [];
         if (currentBlock >= startBlock) {
           for (let from = startBlock; from <= currentBlock; from += CHUNK_SIZE + 1n) {
             const to = from + CHUNK_SIZE > currentBlock ? currentBlock : from + CHUNK_SIZE;
             const logs = await client.getLogs({
               address: scheduler,
-              event: getAbiItem({ abi: MUSDIRECT_DEBIT_ABI, name: "ScheduleCreated" }) as
-                typeof SCHEDULE_CREATED_EVENT,
-              args: { payer: address },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              event: event as any,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              args: { payer: address } as any,
               fromBlock: from,
               toBlock: to,
             });

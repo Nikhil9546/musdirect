@@ -126,12 +126,12 @@ export default function DemoApiPage() {
     <div className="min-h-dvh">
       <Header />
 
-      <main className="mx-auto max-w-4xl px-6 py-16">
+      <main className="mx-auto max-w-4xl px-4 py-16 md:px-6">
         <section className="mb-10">
           <span className="btn-accent mb-6 inline-flex text-xs">
             Powered by @musdirect/x402
           </span>
-          <h1 className="text-4xl font-extrabold tracking-tight text-mezo-ink md:text-5xl">
+          <h1 className="text-balance text-2xl font-extrabold leading-tight tracking-tight text-mezo-ink sm:text-4xl md:text-5xl">
             Premium API. Pay-as-you-go in MUSD.
           </h1>
           <p className="mt-4 max-w-2xl text-mezo-mute md:text-lg">
@@ -245,7 +245,7 @@ export default function DemoApiPage() {
           <p className="mb-3 text-xs font-bold uppercase tracking-wide text-mezo-orange">
             Server integration — 6 lines
           </p>
-          <pre className="overflow-x-auto text-xs leading-relaxed">{`import { createX402Middleware } from "@musdirect/x402";
+          <pre className="max-w-full overflow-x-auto text-xs leading-relaxed">{`import { createX402Middleware } from "@musdirect/x402";
 
 const requirePayment = createX402Middleware({
   chainId: 31611,
@@ -263,8 +263,11 @@ export async function GET(req) {
         </section>
 
         <p className="mt-8 text-center text-xs text-mezo-mute">
-          <a href="/" className="underline">Back to MUSDirect</a> · This is a fictional
-          API. The CR gate, on-chain payment, and 402 handling are all real.
+          <a href="/" className="font-bold text-mezo-orange underline underline-offset-4">
+            ← Back to MUSDirect Dashboard
+          </a>{" "}
+          · This is a fictional API. The CR gate, on-chain payment, and 402
+          handling are all real.
         </p>
       </main>
     </div>

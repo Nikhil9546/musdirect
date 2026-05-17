@@ -73,7 +73,7 @@ export function TroveHealthCard({ account }: Props) {
 
   return (
     <div className="card">
-      <div className="mb-4 flex items-baseline justify-between">
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-4">
         <h2 className="text-lg font-extrabold text-mezo-ink">Trove health</h2>
         <span className="text-xs font-semibold text-mezo-mute">BTC {fmtUsdPrice(price)}</span>
       </div>
