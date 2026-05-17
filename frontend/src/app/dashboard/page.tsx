@@ -20,7 +20,7 @@ export default function DashboardPage() {
     <div className="flex min-h-dvh flex-col">
       <Header />
 
-      <main className="flex-grow px-4 py-12 md:px-6 md:py-20">
+      <main className="flex-grow px-4 pb-12 pt-24 md:px-6 md:pt-20">
         <div className="mx-auto max-w-7xl">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
             <div>

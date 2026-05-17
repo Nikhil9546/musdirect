@@ -126,7 +126,7 @@ export default function DemoApiPage() {
     <div className="min-h-dvh">
       <Header />
 
-      <main className="mx-auto max-w-4xl px-4 py-16 md:px-6">
+      <main className="mx-auto max-w-4xl px-4 pb-16 pt-24 md:px-6 md:pt-16">
         <section className="mb-10">
           <span className="btn-accent mb-6 inline-flex text-xs">
             Powered by @musdirect/x402
@@ -245,7 +245,7 @@ export default function DemoApiPage() {
           <p className="mb-3 text-xs font-bold uppercase tracking-wide text-mezo-orange">
             Server integration — 6 lines
           </p>
-          <pre className="max-w-full overflow-x-auto text-xs leading-relaxed">{`import { createX402Middleware } from "@musdirect/x402";
+          <pre className="whitespace-pre-wrap break-all text-[10px] leading-relaxed sm:text-xs">{`import { createX402Middleware } from "@musdirect/x402";
 
 const requirePayment = createX402Middleware({
   chainId: 31611,

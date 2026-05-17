@@ -15,7 +15,7 @@ export default function HomePage() {
       <Header />
 
       {/* ─── HERO ─── */}
-      <section className="relative overflow-hidden px-4 py-24 md:px-6 md:py-32 lg:py-40">
+      <section className="relative overflow-hidden px-4 pb-24 pt-32 md:px-6 md:py-32 lg:py-40">
         <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-2">
           <div className="animate-fade-up">
             <span className="btn-accent mb-6 inline-flex text-xs">

@@ -48,7 +48,7 @@ export default function MezoGymDemo() {
     <div className="flex min-h-dvh flex-col">
       <Header />
 
-      <main className="mx-auto max-w-4xl flex-grow px-4 py-16 md:px-6">
+      <main className="mx-auto max-w-4xl flex-grow px-4 pb-16 pt-24 md:px-6 md:pt-16">
         <section className="mb-12 text-center">
           <span className="btn-accent mb-6 inline-flex text-xs">
             Powered by @musdirect/sdk
@@ -76,10 +76,10 @@ export default function MezoGymDemo() {
                   Most chosen
                 </span>
               )}
-              <h2 className="text-2xl font-extrabold text-mezo-ink">{plan.name}</h2>
+              <h2 className="text-xl font-extrabold text-mezo-ink sm:text-2xl">{plan.name}</h2>
               <p className="mt-1 text-sm text-mezo-mute">{plan.blurb}</p>
-              <p className="mt-4 font-mono text-4xl font-extrabold text-mezo-ink">
-                {plan.price} <span className="text-base text-mezo-mute">MUSD/mo</span>
+              <p className="mt-4 font-mono text-3xl font-extrabold text-mezo-ink sm:text-4xl">
+                {plan.price} <span className="text-sm text-mezo-mute sm:text-base">MUSD/mo</span>
               </p>
               <ul className="mt-4 mb-6 space-y-1.5 text-sm text-mezo-mute">
                 {plan.bullets.map((b) => (
@@ -118,7 +118,7 @@ export default function MezoGymDemo() {
           <p className="mb-3 text-xs font-bold uppercase tracking-wide text-mezo-orange">
             Integration — 6 lines
           </p>
-          <pre className="max-w-full overflow-x-auto text-xs leading-relaxed">{`import { SubscribeButton } from "@musdirect/sdk";
+          <pre className="whitespace-pre-wrap break-all text-[10px] leading-relaxed sm:text-xs">{`import { SubscribeButton } from "@musdirect/sdk";
 
 <SubscribeButton
   schedulerAddress="0x…"

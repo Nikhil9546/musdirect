@@ -12,7 +12,7 @@ const NAV_LINKS = [
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b-2 border-[#1a1a1a] bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b-2 border-[#1a1a1a] bg-white/95 backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-3 sm:px-4 md:px-6">
         {/* Top Row: Logo + Wallet (always visible) */}
         <div className="flex h-14 items-center justify-between gap-2 sm:gap-4">
@@ -50,12 +50,12 @@ export function Header() {
         </div>
 
         {/* Bottom Row: Mobile Nav (Mobile Only) */}
-        <nav className="flex w-full items-center gap-4 overflow-x-auto border-t border-[#1a1a1a]/5 pb-2 pt-2 md:hidden">
+        <nav className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 border-t border-[#1a1a1a]/5 pb-2 pt-2 md:hidden">
           {NAV_LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
-              className="whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-mezo-mute transition-colors hover:text-mezo-ink"
+              className="text-[10px] font-bold uppercase tracking-wider text-mezo-mute transition-colors hover:text-mezo-ink"
             >
               {link.label}
             </a>
