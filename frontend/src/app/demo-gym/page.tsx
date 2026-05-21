@@ -1,7 +1,11 @@
 "use client";
 
-import { SubscribeButton } from "@musdirect/sdk";
+import dynamic from "next/dynamic";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
+
 import { Header } from "@/components/Header";
+import { Providers } from "@/app/providers";
 import { ENV } from "@/lib/env";
 
 // Demo "Mezo Demo" dApp — shows how a third-party app embeds MUSDirect Debit's
@@ -9,7 +13,12 @@ import { ENV } from "@/lib/env";
 // SDK. Third-party Mezo apps embed <MUSDirectDebit.SubscribeButton /> in 6
 // lines. Positions the scheduler as Mezo's recurring-payments primitive."
 
-const GYM_PAYEE_PLACEHOLDER = "0x000000000000000000000000000000000000DEAD" as `0x${string}`;
+const GYM_PAYEE_PLACEHOLDER = "0x000000000000000000000000000000000000dead" as `0x${string}`;
+
+const SubscribeButton = dynamic(
+  () => import("@musdirect/sdk").then((module) => module.SubscribeButton),
+  { ssr: false }
+);
 
 interface Plan {
   name: string;
@@ -91,16 +100,9 @@ export default function MezoGymDemo() {
               </ul>
               <div className="mt-auto">
                 {schedulerConfigured ? (
-                  <SubscribeButton
-                    schedulerAddress={ENV.scheduler!}
-                    payee={GYM_PAYEE_PLACEHOLDER}
-                    amount={BigInt(plan.price) * 10n ** 18n}
-                    frequency={30n * 86_400n}
-                    totalSpentCap={BigInt(plan.price) * 12n * 10n ** 18n}
-                    minSafeCR={1_500000000000000000n}
-                    label={`Subscribe to ${plan.name}`}
-                    className="btn-primary w-full justify-center"
-                  />
+                  <Providers>
+                    <PlanAction plan={plan} />
+                  </Providers>
                 ) : (
                   <button
                     disabled
@@ -146,5 +148,39 @@ export default function MezoGymDemo() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function PlanAction({ plan }: { plan: Plan }) {
+  const { isConnected } = useAccount();
+
+  if (!isConnected) {
+    return (
+      <ConnectButton.Custom>
+        {({ openConnectModal }) => (
+          <button
+            type="button"
+            onClick={openConnectModal}
+            className="btn-primary w-full justify-center"
+          >
+            Connect wallet to subscribe
+          </button>
+        )}
+      </ConnectButton.Custom>
+    );
+  }
+
+  return (
+    <SubscribeButton
+      schedulerAddress={ENV.scheduler!}
+      chainId={ENV.chainId}
+      payee={GYM_PAYEE_PLACEHOLDER}
+      amount={BigInt(plan.price) * 10n ** 18n}
+      frequency={30n * 86_400n}
+      totalSpentCap={BigInt(plan.price) * 12n * 10n ** 18n}
+      minSafeCR={1_500000000000000000n}
+      label={`Subscribe to ${plan.name}`}
+      className="btn-primary w-full justify-center"
+    />
   );
 }

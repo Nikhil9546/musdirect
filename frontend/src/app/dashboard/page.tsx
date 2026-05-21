@@ -10,8 +10,17 @@ import { CreateScheduleForm } from "@/components/CreateScheduleForm";
 import { SchedulesList } from "@/components/SchedulesList";
 import { ENV } from "@/lib/env";
 import { fmtAddress, fmtToken } from "@/lib/format";
+import { Providers } from "@/app/providers";
 
 export default function DashboardPage() {
+  return (
+    <Providers>
+      <DashboardContent />
+    </Providers>
+  );
+}
+
+function DashboardContent() {
   const { address, isConnected, chain } = useAccount();
   const balance = useBalance({ address });
   const chainId = useChainId();

@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import {
   useAccount,
+  useChainId,
   useReadContract,
+  useSwitchChain,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
@@ -36,6 +38,8 @@ export interface SubscribeButtonProps {
   label?: string;
   /** Tailwind-style className override on the button. */
   className?: string;
+  /** Expected EVM chain id. When set, the button asks the wallet to switch before writing. */
+  chainId?: number;
   /** Fires after the createSchedule tx is mined. */
   onCreated?: (txHash: `0x${string}`) => void;
 }
@@ -58,10 +62,14 @@ export function SubscribeButton(props: SubscribeButtonProps) {
     durationSec = 365n * 86_400n,
     label = "Subscribe with MUSD",
     className,
+    chainId: targetChainId,
     onCreated,
   } = props;
 
   const { address: payer } = useAccount();
+  const currentChainId = useChainId();
+  const switchChain = useSwitchChain();
+  const wrongChain = targetChainId !== undefined && currentChainId !== targetChainId;
 
   const { data: allowance } = useReadContract({
     address: musdAddress,
@@ -81,11 +89,11 @@ export function SubscribeButton(props: SubscribeButtonProps) {
   const createReceipt = useWaitForTransactionReceipt({ hash: create.data });
 
   const [stage, setStage] = useState<"idle" | "approve" | "create" | "done" | "err">("idle");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (approveReceipt.isSuccess && stage === "approve") {
-      setStage("create");
-      submitCreate();
+      void submitCreate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [approveReceipt.isSuccess]);
@@ -97,61 +105,126 @@ export function SubscribeButton(props: SubscribeButtonProps) {
     }
   }, [createReceipt.isSuccess, create.data, onCreated]);
 
-  function submitApprove() {
-    setStage("approve");
-    approve.writeContract({
-      address: musdAddress,
-      abi: ERC20_APPROVE_ABI,
-      functionName: "approve",
-      args: [schedulerAddress, totalSpentCap],
-    });
+  useEffect(() => {
+    const nextError =
+      approve.error ??
+      approveReceipt.error ??
+      create.error ??
+      createReceipt.error ??
+      switchChain.error;
+    if (!nextError) return;
+    setError(errorMessage(nextError));
+    setStage("err");
+  }, [approve.error, approveReceipt.error, create.error, createReceipt.error, switchChain.error]);
+
+  async function submitSwitchChain() {
+    if (targetChainId === undefined) return;
+    setStage("idle");
+    setError(null);
+    try {
+      await switchChain.switchChainAsync({ chainId: targetChainId });
+    } catch (e) {
+      setError(errorMessage(e));
+      setStage("err");
+    }
   }
 
-  function submitCreate() {
+  async function submitApprove() {
+    setStage("approve");
+    setError(null);
+    try {
+      await approve.writeContractAsync({
+        address: musdAddress,
+        abi: ERC20_APPROVE_ABI,
+        functionName: "approve",
+        args: [schedulerAddress, totalSpentCap],
+      });
+    } catch (e) {
+      setError(errorMessage(e));
+      setStage("err");
+    }
+  }
+
+  async function submitCreate() {
     setStage("create");
+    setError(null);
     const now = BigInt(Math.floor(Date.now() / 1000));
-    create.writeContract({
-      address: schedulerAddress,
-      abi: MUSDIRECT_CREATE_ABI,
-      functionName: "createSchedule",
-      gas: 300_000n,
-      args: [
-        payee,
-        amount,
-        frequency,
-        now,
-        now + durationSec,
-        totalSpentCap,
-        minSafeCR,
-      ],
-    });
+    try {
+      await create.writeContractAsync({
+        address: schedulerAddress,
+        abi: MUSDIRECT_CREATE_ABI,
+        functionName: "createSchedule",
+        gas: 300_000n,
+        args: [
+          payee,
+          amount,
+          frequency,
+          now,
+          now + durationSec,
+          totalSpentCap,
+          minSafeCR,
+        ],
+      });
+    } catch (e) {
+      setError(errorMessage(e));
+      setStage("err");
+    }
   }
 
   function onClick() {
     if (!payer) return;
-    if (needsApproval) submitApprove();
-    else submitCreate();
+    if (wrongChain) {
+      void submitSwitchChain();
+      return;
+    }
+    if (needsApproval) void submitApprove();
+    else void submitCreate();
   }
 
   const busy =
     approve.isPending || approveReceipt.isFetching ||
-    create.isPending || createReceipt.isFetching;
+    create.isPending || createReceipt.isFetching ||
+    switchChain.isPending;
 
   const cls =
     className ??
     "inline-flex items-center gap-2 rounded-full border-2 border-black bg-[#FF7100] px-5 py-2.5 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_black] disabled:opacity-50";
 
   const text =
-    stage === "approve" ? "Approving…" :
-    stage === "create" ? "Creating schedule…" :
+    stage === "approve" && approve.isPending ? "Confirm approval in wallet…" :
+    stage === "approve" ? "Waiting for approval…" :
+    stage === "create" && create.isPending ? "Confirm schedule in wallet…" :
+    stage === "create" ? "Waiting for schedule…" :
     stage === "done" ? "Subscribed ✓" :
+    stage === "err" ? "Retry subscription" :
     !payer ? "Connect wallet to subscribe" :
+    wrongChain ? "Switch to Mezo testnet" :
     needsApproval ? `Approve & ${label}` :
     label;
 
   return (
-    <button onClick={onClick} disabled={!payer || busy || stage === "done"} className={cls}>
-      {text}
-    </button>
+    <div className="space-y-2">
+      <button
+        onClick={onClick}
+        disabled={!payer || busy || stage === "done"}
+        className={cls}
+        title={error ?? undefined}
+      >
+        {text}
+      </button>
+      {error && stage === "err" && (
+        <p className="text-xs font-semibold leading-snug text-red-600">
+          {error}
+        </p>
+      )}
+    </div>
   );
+}
+
+function errorMessage(error: unknown) {
+  if (error && typeof error === "object" && "shortMessage" in error) {
+    return String(error.shortMessage);
+  }
+  if (error instanceof Error) return error.message;
+  return String(error);
 }

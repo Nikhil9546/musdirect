@@ -1,15 +1,10 @@
 "use client";
 
-import { useAccount } from "wagmi";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-
 import { Header } from "@/components/Header";
 import { WalrusMascot } from "@/components/WalrusMascot";
 import { ENV } from "@/lib/env";
 
 export default function HomePage() {
-  const { isConnected } = useAccount();
-
   return (
     <div className="flex min-h-dvh flex-col">
       <Header />
@@ -35,13 +30,9 @@ export default function HomePage() {
             </p>
 
             <div className="mt-10 flex flex-wrap items-center gap-4">
-              {isConnected ? (
-                <a href="/dashboard" className="btn-primary">
-                  Go to Dashboard
-                </a>
-              ) : (
-                <ConnectButton label="Launch App" />
-              )}
+              <a href="/dashboard" className="btn-primary">
+                Launch App
+              </a>
               <a href="#how-it-works" className="btn-secondary group">
                 How It Works{" "}
                 <span className="inline-block transition-transform group-hover:translate-x-1">
@@ -133,7 +124,7 @@ export default function HomePage() {
 
           {/* ── Unification thesis ── */}
           <div className="stagger mt-16 grid gap-6 md:grid-cols-2">
-            <a href="/demo" className="card card-hover group block">
+            <a href="/demo-gym" className="card card-hover group block">
               <span className="mb-3 inline-block rounded-full border-2 border-mezo-orange/40 bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-mezo-orange">
                 Recurring
               </span>
@@ -146,7 +137,7 @@ export default function HomePage() {
                 dApp built on <code className="code-inline">@musdirect/sdk</code>.
               </p>
               <span className="mt-4 inline-block text-sm font-bold text-mezo-orange">
-                See /demo →
+                See /demo-gym →
               </span>
             </a>
             <a href="/demo-api" className="card card-hover group block">

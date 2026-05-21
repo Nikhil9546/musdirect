@@ -10,6 +10,7 @@ import { fetchWith402, PAYMENT_RECEIPT_HEADER, type PaymentRequired } from "@mus
 
 import { Header } from "@/components/Header";
 import { ENV } from "@/lib/env";
+import { Providers } from "@/app/providers";
 
 // /demo-api — the API-side twin of /demo.
 //
@@ -34,6 +35,14 @@ const PROMPT_OPTIONS = [
 ] as const;
 
 export default function DemoApiPage() {
+  return (
+    <Providers>
+      <DemoApiContent />
+    </Providers>
+  );
+}
+
+function DemoApiContent() {
   const { address, isConnected } = useAccount();
   const config = useConfig();
   const chainId = useChainId();

@@ -52,10 +52,20 @@ export async function tick(deps: TickDeps): Promise<TickResult> {
   const fromBlock = state.lastScannedBlock + 1n;
 
   if (head >= fromBlock) {
-    const newIds = await client.discoverScheduleIds(fromBlock, head);
-    for (const id of newIds) state.knownIds.add(id);
+    const CHUNK_SIZE = 10000n;
+    let currentFrom = fromBlock;
+    let totalDiscovered = 0;
+
+    while (currentFrom <= head) {
+      const currentTo = currentFrom + CHUNK_SIZE - 1n > head ? head : currentFrom + CHUNK_SIZE - 1n;
+      const newIds = await client.discoverScheduleIds(currentFrom, currentTo);
+      for (const id of newIds) state.knownIds.add(id);
+      totalDiscovered += newIds.length;
+      currentFrom = currentTo + 1n;
+    }
+
     state.lastScannedBlock = head;
-    if (newIds.length > 0) log.info("discovered schedules", { count: newIds.length, head });
+    if (totalDiscovered > 0) log.info("discovered schedules", { count: totalDiscovered, head });
   }
 
   const candidates: ScheduleSnapshot[] = [];

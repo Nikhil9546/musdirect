@@ -1,12 +1,24 @@
 "use client";
 
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import dynamic from "next/dynamic";
+
+import { Providers } from "@/app/providers";
+
+const WalletConnectButton = dynamic(
+  () => import("./WalletConnectButton").then((module) => module.WalletConnectButton),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-9 w-24 rounded-full border-2 border-[#1a1a1a]/20 bg-white/70" />
+    ),
+  }
+);
 
 const NAV_LINKS = [
   { label: "Problem", href: "/#problem" },
   { label: "Solution", href: "/#solution" },
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Demo", href: "/demo" },
+  { label: "Demo", href: "/demo-gym" },
   { label: "API demo", href: "/demo-api" },
 ] as const;
 
@@ -41,11 +53,9 @@ export function Header() {
 
           {/* Wallet */}
           <div className="flex shrink-0 items-center">
-            <ConnectButton
-              label="Connect"
-              accountStatus={{ smallScreen: "avatar", largeScreen: "full" }}
-              chainStatus="icon"
-            />
+            <Providers>
+              <WalletConnectButton />
+            </Providers>
           </div>
         </div>
 
