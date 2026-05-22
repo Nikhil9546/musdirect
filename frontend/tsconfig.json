@@ -17,7 +17,12 @@
     "paths": {
       "@/*": ["./src/*"],
       "@musdirect/sdk": ["./node_modules/@musdirect/sdk/src"],
-      "@musdirect/x402": ["./node_modules/@musdirect/x402/src"]
+      "@musdirect/x402": ["./node_modules/@musdirect/x402/src"],
+      "viem": ["./node_modules/viem"],
+      "viem/*": ["./node_modules/viem/*"],
+      "wagmi": ["./node_modules/wagmi"],
+      "wagmi/*": ["./node_modules/wagmi/*"],
+      "@tanstack/react-query": ["./node_modules/@tanstack/react-query"]
     }
   },
   "include": [
