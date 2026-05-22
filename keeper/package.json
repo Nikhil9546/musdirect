@@ -7,7 +7,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "start": "node --env-file=.env dist/index.js",
+    "start": "node dist/index.js",
+    "start:env": "node --env-file=.env dist/index.js",
     "dev": "tsx --env-file=.env src/index.ts",
     "tick": "tsx --env-file=.env src/cli/tick.ts",
     "tick:env": "tsx src/cli/tick.ts",
