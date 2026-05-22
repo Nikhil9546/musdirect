@@ -18,6 +18,8 @@
       "@/*": ["./src/*"],
       "@musdirect/sdk": ["./node_modules/@musdirect/sdk/src"],
       "@musdirect/x402": ["./node_modules/@musdirect/x402/src"],
+      "react": ["./node_modules/@types/react"],
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"],
       "viem": ["./node_modules/viem"],
       "viem/*": ["./node_modules/viem/*"],
       "wagmi": ["./node_modules/wagmi"],
