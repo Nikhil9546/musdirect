@@ -1,148 +1,177 @@
 # MUSDirect Debit
 
-Collateral-aware recurring MUSD payments on Mezo. Auto-pay rent / SaaS / payroll
-without risking your Bitcoin — every scheduled execution reads the payer's Trove
-ICR first and refuses payments that would push them toward liquidation.
+Collateral-aware MUSD payments on Mezo.
 
-Hackathon: **Mezo Hackathon: Building Bitcoin's Future** — MUSD Track.
-PRD: see `../output/PRD-2026-05-01.md` (and the v2-corrected PDF).
+MUSDirect lets borrowers automate recurring payments and one-shot API payments
+without ignoring their Bitcoin collateral health. Before a payment executes, the
+contract checks the payer's Trove collateral ratio and refuses the payment if it
+would run below the configured safety floor.
 
-## Repo layout
+## What It Does
 
-```
+- **Recurring MUSD payments** for rent, subscriptions, payroll, and SaaS.
+- **x402-style one-shot payments** for paid APIs and agent workflows.
+- **Collateral-aware execution** using Mezo Trove ICR checks.
+- **Recovery Mode protection** with a 155% minimum floor when Recovery Mode is active.
+- **3-failure auto-cancel** for schedules that repeatedly fail the CR gate.
+- **Optional MEZO keeper rewards** from a pre-funded treasury.
+
+## Contracts
+
+| Contract | Link |
+| --- | --- |
+| MUSDirectDebit source | [`contracts/src/MUSDirectDebit.sol`](contracts/src/MUSDirectDebit.sol) |
+| Deploy script | [`contracts/script/Deploy.s.sol`](contracts/script/Deploy.s.sol) |
+| Fork tests | [`contracts/test/MUSDirectDebit.fork.t.sol`](contracts/test/MUSDirectDebit.fork.t.sol) |
+| TroveManager interface | [`contracts/src/interfaces/ITroveManager.sol`](contracts/src/interfaces/ITroveManager.sol) |
+| PriceFeed interface | [`contracts/src/interfaces/IPriceFeed.sol`](contracts/src/interfaces/IPriceFeed.sol) |
+
+### Mezo Testnet Deployment
+
+| Component | Address |
+| --- | --- |
+| MUSDirectDebit | [`0x47e0e0ef8936175ee769e857740f463a9e6f6a9e`](https://explorer.test.mezo.org/address/0x47e0e0ef8936175ee769e857740f463a9e6f6a9e) |
+| MUSD | [`0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503`](https://explorer.test.mezo.org/address/0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503) |
+| TroveManager | [`0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0`](https://explorer.test.mezo.org/address/0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0) |
+| PriceFeed | [`0x86bCF0841622a5dAC14A313a15f96A95421b9366`](https://explorer.test.mezo.org/address/0x86bCF0841622a5dAC14A313a15f96A95421b9366) |
+
+Network: Mezo testnet, chain id `31611`.
+
+## Repository Layout
+
+```text
 musdirect/
-├── contracts/        Foundry project — MUSDirectDebit.sol + fork tests (24/24)
-├── keeper/           Node + viem cron service + live testnet validation script
-├── frontend/         Next.js 14 + wagmi v2 + Mezo Passport (4 routes)
-├── sdk/              @musdirect/sdk — <SubscribeButton/> for recurring dApps
-└── sdk-x402/         @musdirect/x402 — HTTP 402 middleware for reactive APIs
+├── contracts/   Foundry smart contracts and fork tests
+├── keeper/      viem cron keeper for due schedule execution
+├── frontend/    Next.js app, dashboard, and demos
+├── sdk/         @musdirect/sdk SubscribeButton for recurring payments
+└── sdk-x402/    @musdirect/x402 middleware, client, and verifier
 ```
 
-## Status — through Week 4
+## How Payments Work
 
-### Done
+### Recurring Payments
 
-- [x] **Foundry project** + OpenZeppelin + verified Mezo dependency interfaces
-- [x] **`MUSDirectDebit.sol`** — schedule lifecycle, CR-gated execution, Recovery
-      Mode floor (155%), per-schedule allowance accounting, 3-failure auto-cancel,
-      reentrancy guard, fee accounting (25 bps capped at 5 MUSD)
-- [x] **MEZO integration (PRD §15 path)** — optional `IERC20 mezo` constructor
-      param + `fundMezoTreasury()` (anyone can fund) + per-execute drip to the
-      keeper. Cleanly no-op when `mezo == address(0)`.
-- [x] **Day-2 ABI verification** — `checkRecoveryMode` lives on `TroveManager`,
-      not `BorrowerOperations`. Interface, contract, deploy script all corrected.
-- [x] **All mocks deleted** — no `MockMUSD`, `MockTroveManager`, etc.
-- [x] **24/24 fork tests** against live Mezo testnet (chain id 31611). Edge cases
-      use Foundry's `vm.mockCall` cheat code to override specific return values
-      on the real deployed contracts — no deployed mock contracts. Coverage now
-      includes the `executeOneShot` reactive primitive (7 dedicated tests).
-- [x] **Live verify harness** — `keeper/scripts/verify-testnet.sh` calls every
-      ABI MUSDirectDebit depends on; latest run: 171 active Troves, BTC ~$80.2K,
-      RM off, MUSD supply 1.37B.
-- [x] **`@musdirect/keeper`** — viem + node-cron service with retry/backoff +
-      revert classification (TooEarly retryable, ScheduleNotActive fatal).
-      15/15 unit tests.
-- [x] **Deploy + run harness** — `keeper/scripts/deploy-and-tick.sh` runs the
-      full path end-to-end against real testnet when given a funded wallet.
-- [x] **Frontend connect flow** — Next.js 14 + wagmi v2 + Mezo Passport.
-      Bitcoin + EVM wallets via OrangeKit/RainbowKit. Hard SSR boundary on the
-      provider stack.
-- [x] **Trove-health dashboard** — live ICR / RM status / MUSD balance / BTC
-      price + **safe-headroom** calculation ("you can absorb an N% BTC drop
-      before any payment pauses") — the load-bearing visual per PRD §6 P0-6.
-- [x] **Create Schedule form** — payee + amount + frequency + expiry + minSafeCR
-      slider. Batched `approve` + `createSchedule` via wagmi `useWriteContract`.
-- [x] **Schedule list** — event-discovered, with status pills, next-execution
-      countdown, and inline cancel / pause / resume actions.
-- [x] **Validation experiment 1** — `keeper/scripts/trove-distribution`
-      enumerates all 171 testnet Troves and prints a CR histogram. Live result:
-      median 152%, p25 132%, p75 187%. Form default lowered from 250% to 150%
-      to match the actual borrower base.
-- [x] **`@musdirect/sdk`** — drop-in `<SubscribeButton/>` React component for
-      third-party Mezo dApps. Six-line integration.
-- [x] **MezoGym demo** — fake gym dApp at `/demo-gym` showing the SDK
-      integration in production. Three pricing tiers, working Subscribe button.
-- [x] **`@musdirect/x402`** — HTTP `402 Payment Required` middleware +
-      client helper + on-chain receipt verifier. Works in any Fetch-API
-      runtime (Next.js, Express, Bun, Deno, Cloudflare). 12/12 unit tests pass.
-- [x] **Premium API demo** — `/api/premium` route gated by `@musdirect/x402`
-      and `/demo-api` page that demonstrates the full 402 → sign → retry → response
-      flow. Live 402 verified end-to-end: `curl /api/premium` returns the
-      PaymentRequired body with a fresh requestId.
-- [x] **Unification thesis** — `MUSDirectDebit.sol` exposes both
-      `executePayment` (recurring) and `executeOneShot` (reactive), sharing every
-      line of CR-gate, Recovery Mode, fee, and MEZO drip logic. Pitch line:
-      *every MUSD payment on Mezo runs through the same collateral-aware gate*.
+1. A user approves MUSD for the scheduler.
+2. A schedule is created with payee, amount, frequency, expiry, cap, and minimum CR.
+3. The keeper calls `executePayment(scheduleId)` when the schedule is due.
+4. The contract checks the payer's current ICR through Mezo's TroveManager.
+5. If safe, MUSD transfers to the payee and the next execution time advances.
+6. If unsafe, the payment is skipped and the failure count increments.
 
-### Out of session — requires you, not code
+### x402 One-Shot Payments
 
-- [ ] Deploy `MUSDirectDebit` to Mezo testnet with a funded wallet
-      (`keeper/scripts/deploy-and-tick.sh`)
-- [ ] Open a real Trove for the test payer; create a real schedule; observe a
-      real MUSD payment land via the keeper
-- [ ] 1:1 user interviews (5 Mezo borrowers — PRD §13 experiment 2)
-- [ ] dApp SDK cold outreach (10 Mezo dApp builders — PRD §13 experiment 3)
-- [ ] Week 6 demo polish: 3-minute Loom, Mirror post, KYB paperwork
+1. A protected API returns `402 Payment Required` with payment details.
+2. The client signs an on-chain `executeOneShot(...)` payment.
+3. The API verifies the `OneShotPaid` event from the transaction receipt.
+4. If valid, the server returns the premium response.
 
-## Build & test
+Both flows use the same CR gate, Recovery Mode floor, fee logic, and replay
+protection model.
+
+## Demo Routes
+
+Run the frontend and open:
+
+| Route | Description |
+| --- | --- |
+| `/` | Product overview and entry point |
+| `/dashboard` | Trove health, schedule creation, and schedule list |
+| `/demo-gym` | Example dApp using `@musdirect/sdk` for subscriptions |
+| `/demo-api` | x402 paid API demo |
+| `/api/premium` | Protected API route that returns `402` until paid |
+
+## Running Locally
+
+Install dependencies per package:
 
 ```sh
-# Contracts
+cd frontend && pnpm install
+cd ../keeper && pnpm install
+cd ../sdk && pnpm install
+cd ../sdk-x402 && pnpm install
+```
+
+Start the frontend:
+
+```sh
+cd frontend
+pnpm dev
+```
+
+Frontend URL: `http://localhost:3000`
+
+Start the keeper:
+
+```sh
+cd keeper
+pnpm dev
+```
+
+The keeper reads `keeper/.env` and executes due schedules for the configured
+`SCHEDULER_ADDRESS`.
+
+## Testing
+
+Contracts:
+
+```sh
 cd contracts
-forge install OpenZeppelin/openzeppelin-contracts --no-git --shallow  # one-time
 forge test --match-contract MUSDirectDebitForkTest \
-  --fork-url https://rpc.test.mezo.org --fork-block-number 12923917
-
-# Keeper
-cd ../keeper && pnpm install && pnpm test
-
-# Live read-only check
-scripts/verify-testnet.sh
-
-# Live Trove distribution (validation experiment 1)
-pnpm trove-distribution
-
-# SDK
-cd ../sdk && pnpm install && pnpm build
-
-# Frontend (uses the SDK via local link)
-cd ../frontend && pnpm install && pnpm dev   # http://localhost:3000
-                                              # http://localhost:3000/demo-gym
+  --fork-url https://rpc.test.mezo.org \
+  --fork-block-number 12923917
 ```
 
-## Mezo dependencies (testnet, verified live 2026-05-10)
-
-| Primitive    | Address                                      | Methods we call                                  |
-| ------------ | -------------------------------------------- | ------------------------------------------------ |
-| MUSD         | `0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503` | `transferFrom`, `balanceOf`, `approve`, `allowance` |
-| TroveManager | `0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0` | `getCurrentICR`, `checkRecoveryMode`, `getTroveOwnersCount`, `TroveOwners` |
-| PriceFeed    | `0x86bCF0841622a5dAC14A313a15f96A95421b9366` | `fetchPrice`                                     |
-
-## End-to-end against real testnet
+Keeper:
 
 ```sh
-PAYER_PRIVATE_KEY=0x…  KEEPER_PRIVATE_KEY=0x…  FEE_RECIPIENT=0x…  PAYEE=0x…  \
-  keeper/scripts/deploy-and-tick.sh
+cd keeper
+pnpm test
 ```
 
-Deploys `MUSDirectDebit`, creates a schedule from the payer, runs one keeper
-tick, asserts a real MUSD payment landed — or reports the CR gate refused
-execution (also a valid pass state — the product working as designed).
+SDK:
 
-## What ships in the demo
+```sh
+cd sdk
+pnpm build
+```
 
-| URL | What |
-|---|---|
-| `/` | Landing page (problem / solution / how-it-works / contracts) + Dashboard (Trove health + safe headroom + Create schedule + Schedules list) |
-| `/demo-gym` | Fake gym dApp using `@musdirect/sdk` — recurring subscriptions in 6 lines |
-| `/demo-api` | Fake AI inference endpoint using `@musdirect/x402` — pay-per-call APIs in 6 lines, CR-gate refuses when Trove is unsafe |
-| `/api/premium` | The actual server route behind the demo, gated by `createX402Middleware`. Returns `402 Payment Required` until paid; on receipt verification returns a JSON answer. |
+x402:
 
-## Open items per PRD §15
+```sh
+cd sdk-x402
+pnpm test
+```
 
-1. ~~`checkRecoveryMode` location~~ → resolved (TroveManager).
-2. ~~Passport approve + transferFrom flow~~ → wired in code; pending the on-chain
-   end-to-end run.
-3. ~~Mezo Earn gauge registration~~ → superseded by the pre-funded MEZO treasury
-   path. Gauge can fund the treasury later without redeploying.
-4. EIP-2612 `permit` on MUSD — would unlock P1-C as a one-day bolt-on.
+## Environment
+
+Frontend public env:
+
+```sh
+NEXT_PUBLIC_RPC_URL=https://rpc.test.mezo.org
+NEXT_PUBLIC_CHAIN_ID=31611
+NEXT_PUBLIC_SCHEDULER_ADDRESS=0x47e0e0ef8936175ee769e857740f463a9e6f6a9e
+NEXT_PUBLIC_MUSD_ADDRESS=0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503
+NEXT_PUBLIC_TROVE_MANAGER_ADDRESS=0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0
+NEXT_PUBLIC_PRICE_FEED_ADDRESS=0x86bCF0841622a5dAC14A313a15f96A95421b9366
+```
+
+Keeper env:
+
+```sh
+RPC_URL=https://rpc.test.mezo.org
+CHAIN_ID=31611
+SCHEDULER_ADDRESS=0x47e0e0ef8936175ee769e857740f463a9e6f6a9e
+KEEPER_PRIVATE_KEY=0x...
+```
+
+Never commit funded private keys.
+
+## Notes
+
+- Auto-cancelled schedules cannot be resumed. Create a new schedule after
+  restoring Trove health or lowering the minimum CR.
+- A landed keeper transaction can still represent a skipped payment if the CR
+  gate refused execution. The contract records this through `PaymentPaused`.
+- For a successful testnet demo, the payer needs testBTC for gas, MUSD balance,
+  MUSD allowance, and a Trove whose ICR is above the schedule threshold.

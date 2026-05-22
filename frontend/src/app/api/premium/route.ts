@@ -13,6 +13,8 @@ import { createX402Middleware } from "@musdirect/x402";
 
 import { ENV } from "@/lib/env";
 
+const DEMO_RECIPIENT = "0x000000000000000000000000000000000000dead";
+
 // The middleware is created once per module load. The in-memory `seen` store
 // persists for the lifetime of the route worker, which is enough for a demo.
 // For production: pass a Redis-backed store via `seenStore`.
@@ -25,7 +27,7 @@ const requirePayment = createX402Middleware({
   rpcUrl: ENV.rpcUrl,
   schedulerAddress: ENV.scheduler ?? "0x0000000000000000000000000000000000000000",
   musdAddress: ENV.musd,
-  recipient: ENV.recipient ?? ENV.musd, // placeholder — set via env in production
+  recipient: ENV.recipient ?? DEMO_RECIPIENT, // placeholder — set via env in production
   amountMusd: 3n * 10n ** 18n,
   minSafeCR: 15n * 10n ** 17n, // 150%
   endpointLabel: "/api/premium",

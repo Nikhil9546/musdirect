@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount, useChainId, useConfig, useWalletClient } from "wagmi";
+import { useAccount, useChainId, useConfig, useSwitchChain, useWalletClient } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { getPublicClient } from "wagmi/actions";
 import type { Hex } from "viem";
@@ -46,6 +46,7 @@ function DemoApiContent() {
   const { address, isConnected } = useAccount();
   const config = useConfig();
   const chainId = useChainId();
+  const switchChain = useSwitchChain();
   const { data: walletClient } = useWalletClient();
 
   const [prompt, setPrompt] = useState<string>(PROMPT_OPTIONS[0]);
@@ -76,6 +77,12 @@ function DemoApiContent() {
     setBusy(true);
 
     try {
+      if (chainId !== ENV.chainId) {
+        pushStep({ label: "Switch to Mezo testnet", status: "running" });
+        await switchChain.switchChainAsync({ chainId: ENV.chainId });
+        patchLast({ status: "ok", detail: `chain ${ENV.chainId}` });
+      }
+
       const url = `/api/premium?prompt=${encodeURIComponent(prompt)}`;
 
       // Step 1: the unpaid call.
@@ -93,7 +100,7 @@ function DemoApiContent() {
 
       // Step 2: settle on-chain.
       pushStep({ label: "Sign executeOneShot on Mezo testnet", status: "running" });
-      const publicClient = getPublicClient(config, { chainId });
+      const publicClient = getPublicClient(config, { chainId: ENV.chainId });
       if (!publicClient) throw new Error("no public client");
       const retried = await fetchWith402(url, {
         walletClient,
